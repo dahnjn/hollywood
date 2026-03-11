@@ -603,6 +603,9 @@ input[type=number] { -moz-appearance:textfield; }
       <div class="phase-title">SIGN DIRECTORS</div>
       <div class="phase-desc">Offer each director a flat fee + % of their film's box office revenue. Directors may accept, counter, or decline based on the quality of your roster. Each team signs 2 directors — each director can helm up to 2 of your 3 films.</div>
     </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <button class="btn btn-gold" onclick="autoSignAllDirectors()" style="font-size:11px;letter-spacing:0.15em;">⚡ Auto-Sign All Directors</button>
+    </div>
     <div class="dir-progress" id="dir-progress-bar"></div>
     <div class="whose-turn-banner" id="dir-turn-banner">
       <div class="wtb-label">Offering Studio</div>
@@ -624,6 +627,7 @@ input[type=number] { -moz-appearance:textfield; }
     <div class="film-tabs" id="film-tabs"></div>
     <div class="assemble-layout" id="assemble-grid"></div>
     <div class="mt16 flex-row">
+      <button class="btn" onclick="autoAssembleAllFilms()" style="margin-right:8px;">⚡ Auto-Assemble</button>
       <button class="btn btn-gold" onclick="lockAllFilms()">Lock All Films & See Results →</button>
       <div style="font-size:11px;color:var(--muted);margin-left:12px;" id="assemble-status"></div>
     </div>
@@ -1582,6 +1586,100 @@ function autoAssignAll() {
   });
   renderAssembleGrid();
   toast('⚡ Star tiers auto-assigned across all films');
+}
+
+
+function autoSignAllDirectors() {
+  // Reset any existing director assignments
+  G.teams.forEach(t => { t.directors = []; t.budget = STARTING_BUDGET - teamSpend(t); });
+  G.directorPool.forEach(d => { d.signedBy = null; d.passed = false; d.dealFee = undefined; d.dealPct = undefined; });
+
+  // Sort directors best→worst so teams compete for top talent
+  const ranked = G.directorPool
+    .map((d,i) => ({...d, i}))
+    .sort((a,b) => b.stars - a.stars || a.minFee - b.minFee);
+
+  // Round-robin: each team picks 1 director per round, 2 rounds total
+  for(let round = 0; round < 2; round++) {
+    G.teams.forEach(team => {
+      if(team.directors.length > round) return; // already picked this round
+      // Find best available affordable director
+      const pick = ranked.find(d =>
+        !G.directorPool[d.i].signedBy &&
+        !G.directorPool[d.i].passed &&
+        team.budget >= d.minFee
+      );
+      if(pick) {
+        const dir = G.directorPool[pick.i];
+        dir.signedBy = team.id;
+        dir.dealFee = pick.minFee;
+        dir.dealPct = pick.minPct;
+        team.budget -= pick.minFee;
+        team.directors.push({dirIdx: pick.i, flatFee: pick.minFee, pct: pick.minPct});
+      }
+    });
+  }
+
+  // Mark remaining as passed
+  G.directorPool.forEach(d => { if(!d.signedBy) d.passed = true; });
+
+  // Advance turn to first team that still needs a director (likely none)
+  G.dirTurn = 0;
+  renderDirectors();
+  renderDirProgress();
+  renderHeader();
+  toast('⚡ Directors auto-signed — best available assigned to each team');
+
+  // Check if all done and show proceed modal
+  const allSigned = G.teams.every(t => t.directors.length >= 2);
+  if(allSigned) {
+    setTimeout(() => {
+      modal('All Directors Signed!',
+        'Every studio has 2 directors. Ready to assemble your films.',
+        [{label:'Back', action:()=>{}},
+         {label:'Assemble Films →', gold:true, action:()=>{ showPhase('assemble'); renderAssemble(); }}]
+      );
+    }, 400);
+  }
+}
+
+function autoAssembleAllFilms() {
+  G.teams.forEach(team => {
+    // Build flat sorted lists of each piece type (best first)
+    const keyMap = {scripts:'script', cast:'cast', crew:'crew'};
+    const tierMap = {scripts:SCRIPT_TIERS, cast:CAST_TIERS, crew:CREW_TIERS};
+    const pieces = {};
+    ['scripts','cast','crew'].forEach(type => {
+      const slots = [];
+      team.purchases[type].forEach(p => {
+        const tier = tierMap[type][p.stars-1];
+        for(let k=0;k<p.qty;k++) slots.push({stars:p.stars, label:tier.label, price:tier.price});
+      });
+      slots.sort((a,b) => b.stars - a.stars); // best first
+      pieces[type] = slots;
+    });
+
+    // Assign pieces to films: film 0 = best, film 1 = middle, film 2 = weakest
+    team.films.forEach((f, fi) => {
+      f.script = pieces.scripts[fi] || null;
+      f.cast   = pieces.cast[fi]    || null;
+      f.crew   = pieces.crew[fi]    || null;
+    });
+
+    // Assign directors: first director helms films 0 & 1, second helms film 2
+    const dirs = team.directors;
+    if(dirs[0] !== undefined) { team.films[0].director = dirs[0].dirIdx; team.films[1].director = dirs[0].dirIdx; }
+    if(dirs[1] !== undefined) { team.films[2].director = dirs[1].dirIdx; }
+
+    // Assign release windows: best film to Winter, middle to Fall, weakest to Summer
+    // (best film = film 0, since it has the highest-tier pieces)
+    team.films[0].window = 'winter';
+    team.films[1].window = 'fall';
+    team.films[2].window = 'summer';
+  });
+
+  renderAssemble();
+  toast('⚡ Films auto-assembled — best pieces to Winter, spread across all seasons');
 }
 
 function lockAllFilms() {
