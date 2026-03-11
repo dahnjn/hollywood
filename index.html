@@ -1,0 +1,1787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOLLYWOOD</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #B8860B;
+  --gold2: #DAA520;
+  --ink: #FFFFFF;
+  --ink2: #F8F8F8;
+  --ink3: #F0F0F0;
+  --ink4: #E4E4E4;
+  --ink5: #CCCCCC;
+  --dim: #888888;
+  --muted: #555555;
+  --soft: #333333;
+  --text: #111111;
+  --text2: #333333;
+  --red: #C0392B; --orange: #D4681A; --yellow: #B8860B;
+  --green: #1A7A3A; --blue: #1558A0; --purple: #6B2F9E;
+  --grey: #666; --black-c: #222;
+  --accent: #1558A0;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{font-size:14px;}
+body{
+  background:var(--ink);
+  color:var(--text);
+  font-family:'Barlow',sans-serif;
+  font-weight:300;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;flex-direction:column;}
+
+/* ── TITLE SCREEN ── */
+#screen-title{
+  align-items:center;justify-content:center;
+  background:linear-gradient(160deg, #0a1628 0%, #1558A0 60%, #0a1628 100%);
+  position:relative;overflow:hidden;
+}
+#screen-title::before{
+  content:'';position:absolute;inset:0;
+  background:none;
+}
+.title-content{text-align:center;position:relative;z-index:1;}
+.title-eyebrow{
+  font-family:'Barlow',sans-serif;font-weight:500;
+  font-size:11px;letter-spacing:0.5em;text-transform:uppercase;
+  color:var(--gold);opacity:0.7;margin-bottom:24px;
+}
+.title-main{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(80px,15vw,160px);
+  letter-spacing:0.08em;
+  color:var(--text);
+  line-height:0.85;
+  text-shadow:0 0 80px rgba(200,169,81,0.15);
+}
+.title-main span{color:var(--gold);}
+.title-sub{
+  font-family:'Playfair Display',serif;font-style:italic;
+  font-size:16px;color:var(--muted);
+  margin:20px 0 48px;letter-spacing:0.05em;
+}
+.title-team-setup{
+  background:#FFFFFF;border:1px solid var(--ink5);box-shadow:0 4px 24px rgba(0,0,0,0.10);
+  border-radius:8px;padding:32px 40px;
+  display:inline-block;text-align:left;min-width:400px;
+}
+.setup-label{font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;}
+.team-name-inputs{display:flex;flex-direction:column;gap:10px;margin-bottom:24px;}
+.team-name-row{display:flex;align-items:center;gap:12px;}
+.team-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.team-input{
+  background:#FFFFFF;border:2px solid var(--ink5);border-radius:4px;
+  color:var(--text);font-family:'Barlow',sans-serif;font-weight:500;
+  font-size:14px;padding:9px 14px;flex:1;outline:none;
+  transition:border-color .2s;
+}
+.team-input:focus{border-color:var(--accent);}
+.btn-start{
+  width:100%;background:var(--gold);border:none;
+  color:var(--ink);font-family:'Barlow',sans-serif;
+  font-weight:600;font-size:12px;letter-spacing:0.25em;
+  text-transform:uppercase;padding:14px;border-radius:3px;
+  cursor:pointer;transition:all .2s;
+}
+.btn-start:hover{background:var(--gold2);}
+
+/* ── GAME HEADER ── */
+.game-header{
+  background:#FFFFFF;
+  border-bottom:2px solid var(--ink5);
+  padding:0 32px;height:56px;
+  display:flex;align-items:center;gap:24px;
+  position:sticky;top:0;z-index:200;
+  box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+.header-logo{
+  font-family:'Bebas Neue',sans-serif;font-size:24px;
+  letter-spacing:0.1em;color:var(--gold);
+  flex-shrink:0;
+}
+.header-phase{
+  font-size:11px;letter-spacing:0.25em;text-transform:uppercase;
+  color:var(--muted);
+}
+.header-teams{display:flex;gap:2px;margin-left:auto;}
+.header-team{
+  padding:6px 14px;border-radius:3px;
+  font-size:11px;font-weight:500;letter-spacing:0.08em;
+  transition:all .15s;
+}
+.header-team.active-team{
+  background:rgba(21,88,160,0.08);
+  color:var(--accent);
+  border:1px solid rgba(21,88,160,0.25);
+}
+.header-budget{
+  font-family:'Bebas Neue',sans-serif;font-size:16px;
+  letter-spacing:0.06em;
+  padding:6px 16px;border-left:2px solid var(--ink5);
+  margin-left:8px;color:var(--text);
+}
+
+/* ── PHASE CONTENT ── */
+.phase-wrap{flex:1;padding:32px;max-width:1320px;width:100%;margin:0 auto;background:#FAFAFA;}
+.phase-header{margin-bottom:28px;}
+.phase-num{
+  font-family:'Bebas Neue',sans-serif;font-size:11px;
+  letter-spacing:0.4em;color:var(--dim);text-transform:uppercase;
+}
+.phase-title{
+  font-family:'Bebas Neue',sans-serif;font-size:48px;
+  letter-spacing:0.06em;color:var(--accent);line-height:1;margin:4px 0;
+}
+.phase-desc{font-size:13px;color:var(--muted);line-height:1.6;max-width:640px;}
+
+/* ── BUTTONS ── */
+.btn{
+  background:none;border:1px solid var(--dim);color:var(--soft);
+  font-family:'Barlow',sans-serif;font-weight:500;
+  font-size:11px;letter-spacing:0.15em;text-transform:uppercase;
+  padding:9px 20px;border-radius:3px;cursor:pointer;transition:all .2s;
+}
+.btn:hover{border-color:var(--soft);color:var(--text);}
+.btn-gold{
+  background:var(--gold);border-color:var(--gold);color:var(--ink);
+  font-weight:600;
+}
+.btn-gold:hover{background:#1a6fd4;border-color:#1a6fd4;}
+.btn-gold:disabled{background:var(--dim);border-color:var(--dim);color:var(--muted);cursor:default;}
+
+/* ── CARDS ── */
+.color-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:3px;
+  font-size:9px;font-weight:600;letter-spacing:0.05em;
+  color:rgba(255,255,255,0.9);flex-shrink:0;
+}
+.color-badge.yellow,.color-badge.grey{color:rgba(0,0,0,0.75);}
+
+/* ── DRAFT PHASE ── */
+.draft-layout{display:grid;grid-template-columns:1fr 300px;gap:20px;}
+.draft-main{display:flex;flex-direction:column;gap:20px;}
+.draft-sidebar{display:flex;flex-direction:column;gap:16px;}
+
+.card-category{
+  background:var(--ink3);border:1px solid var(--ink4);border-radius:4px;
+  overflow:hidden;
+}
+.cat-header{
+  padding:14px 20px;border-bottom:1px solid var(--ink4);
+  display:flex;align-items:center;gap:12px;
+}
+.cat-icon{font-size:18px;}
+.cat-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.1em;color:var(--soft);}
+.cat-meta{margin-left:auto;font-size:11px;color:var(--dim);letter-spacing:0.1em;}
+.cat-price-info{font-size:11px;color:var(--muted);margin-left:8px;}
+
+.cards-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(110px,1fr));
+  gap:8px;padding:16px;
+}
+.draft-card{
+  border-radius:4px;padding:12px 10px;
+  border:1.5px solid transparent;
+  cursor:pointer;transition:all .15s;
+  position:relative;text-align:center;
+  background:var(--ink4);
+}
+.draft-card:hover:not(.taken):not(.no-funds){
+  transform:translateY(-2px);
+  border-color:rgba(200,169,81,0.4);
+  background:var(--ink5);
+}
+.draft-card.taken{opacity:0.25;cursor:default;}
+.draft-card.owned{border-color:rgba(200,169,81,0.3);background:rgba(200,169,81,0.05);}
+.draft-card.no-funds{opacity:0.5;cursor:not-allowed;}
+.dc-color{
+  width:32px;height:32px;border-radius:3px;
+  margin:0 auto 8px;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;
+}
+.dc-name{font-size:10px;color:var(--text2);line-height:1.3;margin-bottom:6px;min-height:26px;}
+.dc-price{
+  font-family:'Bebas Neue',sans-serif;font-size:14px;
+  letter-spacing:0.05em;color:var(--gold);
+}
+.taken-label{
+  position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;font-size:9px;letter-spacing:0.2em;
+  text-transform:uppercase;color:var(--dim);
+  background:rgba(8,8,8,0.5);border-radius:4px;
+}
+
+/* ── DRAFT SIDEBAR ── */
+.turn-box{
+  background:var(--ink3);border:1px solid var(--ink4);border-radius:4px;
+  padding:20px;text-align:center;
+}
+.turn-label{font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:var(--dim);margin-bottom:8px;}
+.turn-team-name{
+  font-family:'Bebas Neue',sans-serif;font-size:28px;
+  letter-spacing:0.06em;color:var(--gold);line-height:1.1;
+}
+.turn-budget{
+  font-family:'Bebas Neue',sans-serif;font-size:18px;
+  color:var(--text2);margin-top:4px;
+}
+.turn-progress{font-size:11px;color:var(--muted);margin-top:4px;}
+
+.hand-box{
+  background:var(--ink3);border:1px solid var(--ink4);border-radius:4px;
+  padding:16px;flex:1;overflow-y:auto;max-height:500px;
+}
+.hand-title{font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--dim);margin-bottom:12px;}
+.hand-team-section{margin-bottom:16px;}
+.hand-team-label{
+  font-size:10px;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:8px;
+  padding-bottom:6px;border-bottom:1px solid var(--ink4);
+}
+.hand-item{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 0;border-bottom:1px solid var(--ink4);
+}
+.hand-item:last-child{border:none;}
+.hand-type{font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--dim);width:36px;}
+.hand-name{font-size:11px;color:var(--text2);flex:1;}
+.hand-cost{font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--muted);}
+.hand-empty{font-size:11px;color:var(--dim);font-style:italic;}
+
+/* ── DIRECTOR PHASE ── */
+.director-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+  gap:16px;
+}
+.dir-card{
+  background:var(--ink3);border:1px solid var(--ink4);border-radius:4px;
+  padding:20px;transition:border-color .2s;
+}
+.dir-card.signed{border-color:rgba(30,132,73,0.35);}
+.dir-card.passed{opacity:0.4;pointer-events:none;}
+.dir-card.available{border-color:rgba(200,169,81,0.15);}
+.dir-top{display:flex;gap:14px;margin-bottom:14px;}
+.dir-avatar{
+  width:52px;height:52px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;background:var(--ink4);
+}
+.dir-info{flex:1;}
+.dir-name{font-family:'Playfair Display',serif;font-size:16px;margin-bottom:2px;}
+.dir-style{font-size:11px;color:#666;font-style:italic;line-height:1.4;margin-bottom:8px;}
+.dir-colors{display:flex;gap:4px;}
+.dir-fee-note{font-size:10px;color:#777;margin-top:6px;letter-spacing:0.08em;}
+.dir-offer-row{display:flex;gap:8px;align-items:center;margin-top:10px;}
+.offer-inp{
+  background:var(--ink4);border:1px solid var(--ink5);border-radius:3px;
+  color:var(--text);font-family:'Barlow',sans-serif;font-size:13px;
+  padding:7px 10px;outline:none;transition:border-color .2s;
+}
+.offer-inp:focus{border-color:var(--gold);}
+.offer-inp.flat{width:90px;}
+.offer-inp.pct{width:60px;}
+.offer-symbol{font-size:11px;color:var(--muted);}
+.dir-status{font-size:11px;margin-top:8px;min-height:16px;font-style:italic;}
+.dir-status.accepted{color:#1E8449;}
+.dir-status.rejected{color:#C0392B;}
+.dir-status.pending{color:var(--muted);}
+.signed-tag{
+  display:inline-block;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;
+  background:rgba(30,132,73,0.15);color:#1E8449;
+  border:1px solid rgba(30,132,73,0.3);
+  padding:3px 8px;border-radius:2px;margin-top:6px;
+}
+.whose-turn-banner{
+  background:rgba(200,169,81,0.07);border:1px solid rgba(200,169,81,0.2);
+  border-radius:4px;padding:14px 20px;margin-bottom:20px;
+  display:flex;align-items:center;gap:12px;
+}
+.wtb-label{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);}
+.wtb-team{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.06em;color:var(--gold);}
+.wtb-count{font-size:12px;color:var(--muted);margin-left:auto;}
+.dir-progress{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
+  margin-bottom:20px;
+}
+.dir-prog-team{
+  background:var(--ink3);border:1px solid var(--ink4);border-radius:4px;
+  padding:12px 16px;
+}
+.dpt-name{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.dpt-count{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:0.04em;color:var(--text);}
+.dpt-pips{display:flex;gap:3px;margin-top:6px;}
+.dpt-pip{width:18px;height:6px;border-radius:1px;background:var(--ink5);}
+.dpt-pip.filled{background:var(--gold);}
+
+/* ── ASSEMBLE PHASE ── */
+.assemble-layout{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.movie-card{
+  background:var(--ink3);border:1px solid var(--ink4);border-radius:4px;
+  overflow:hidden;
+}
+.movie-card-header{
+  padding:12px 16px;border-bottom:1px solid var(--ink4);
+  display:flex;align-items:center;gap:10px;
+}
+.mc-team-stripe{width:4px;height:32px;border-radius:2px;flex-shrink:0;}
+.mc-team-name{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:0.1em;color:var(--soft);}
+.mc-film-num{margin-left:auto;font-size:10px;color:var(--dim);}
+.movie-card-body{padding:16px;}
+.mc-slot{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 0;border-bottom:1px solid var(--ink4);
+}
+.mc-slot:last-of-type{border:none;margin-bottom:8px;}
+.mc-slot-icon{font-size:14px;width:20px;text-align:center;flex-shrink:0;}
+.mc-slot-type{font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--dim);width:40px;flex-shrink:0;}
+.mc-slot-name{font-size:11px;color:var(--muted);flex:1;line-height:1.3;}
+.mc-slot-name.filled{color:var(--text2);}
+.mc-slot-name.empty{font-style:italic;color:var(--dim);}
+.mc-settings{border-top:1px solid var(--ink4);padding-top:12px;display:flex;flex-direction:column;gap:8px;}
+.mc-setting{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.mc-setting-label{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim);flex-shrink:0;}
+.mc-select{
+  background:var(--ink4);border:1px solid var(--ink5);border-radius:3px;
+  color:var(--text);font-family:'Barlow',sans-serif;font-size:11px;
+  padding:5px 8px;outline:none;cursor:pointer;max-width:160px;width:100%;
+}
+.mc-budget-input{
+  background:var(--ink4);border:1px solid var(--ink5);border-radius:3px;
+  color:var(--text);font-family:'Barlow',sans-serif;font-size:12px;
+  padding:5px 8px;outline:none;width:90px;text-align:right;
+}
+.mc-budget-input:focus,.mc-select:focus{border-color:var(--gold);}
+.mc-harmony{
+  margin-top:10px;background:#F5F7FA;border-radius:3px;padding:10px 12px;border:1px solid var(--ink5);
+}
+.mc-harmony-label{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);margin-bottom:7px;}
+.harmony-bar{display:flex;gap:3px;margin-bottom:6px;}
+.hb-seg{height:5px;flex:1;border-radius:1px;background:var(--ink5);transition:background .3s;}
+.hb-seg.filled{background:var(--gold);}  .quality-bar-fill{background:linear-gradient(90deg,#C8A20A,var(--gold));}
+.harmony-score-text{font-size:10px;color:var(--muted);}
+
+/* release calendar strip above assemble */
+.release-strip{
+  display:flex;gap:8px;margin-bottom:20px;
+  background:var(--ink3);border:1px solid var(--ink4);
+  border-radius:4px;padding:16px 20px;align-items:center;
+  flex-wrap:wrap;
+}
+.rs-month{
+  flex:1;min-width:80px;text-align:center;
+  padding:10px 8px;border-radius:3px;
+  border:1px solid var(--ink5);
+  transition:all .2s;
+}
+.rs-month.crowded{border-color:rgba(192,57,43,0.3);background:rgba(192,57,43,0.05);}
+.rs-month.open{border-color:rgba(30,132,73,0.2);background:rgba(30,132,73,0.04);}
+.rs-name{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:0.1em;color:var(--muted);}
+.rs-pool{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.04em;color:var(--gold);}
+.rs-films{font-size:9px;color:var(--dim);letter-spacing:0.1em;margin-top:2px;}
+
+/* ── RESULTS PHASE ── */
+.results-layout{display:grid;grid-template-columns:1fr 280px;gap:20px;}
+.results-main{display:flex;flex-direction:column;gap:16px;}
+.results-sidebar{display:flex;flex-direction:column;gap:16px;}
+
+.window-result{
+  background:var(--ink3);border:1px solid var(--ink4);border-radius:4px;
+  overflow:hidden;
+}
+.wr-header{
+  padding:14px 20px;border-bottom:1px solid var(--ink4);
+  display:flex;align-items:baseline;gap:14px;
+}
+.wr-month{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.08em;color:var(--text);}
+.wr-pool{font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--gold);}
+.wr-pool-label{font-size:10px;color:var(--dim);letter-spacing:0.1em;}
+.wr-films{padding:0;}
+.wr-film-row{
+  display:grid;
+  grid-template-columns:3fr 80px 80px 80px 80px;
+  gap:8px;padding:12px 20px;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  align-items:center;
+}
+.wr-film-row:last-child{border:none;}
+.wr-film-row.winner{background:rgba(200,169,81,0.04);}
+.wfr-title{font-family:'Playfair Display',serif;font-size:13px;}
+.wfr-studio{font-size:10px;color:var(--muted);margin-top:1px;}
+.wfr-label{font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--dim);margin-bottom:2px;}
+.wfr-value{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:0.04em;}
+.wfr-profit.pos{color:#1E8449;}
+.wfr-profit.neg{color:#C0392B;}
+.wfr-harmony-chips{display:flex;gap:3px;}
+.hchip{width:10px;height:10px;border-radius:1px;}
+.crown{font-size:14px;margin-right:4px;}
+
+.leaderboard{
+  background:var(--ink3);border:1px solid var(--ink4);
+  border-radius:4px;padding:20px;
+}
+.lb-title{font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--dim);margin-bottom:16px;}
+.lb-row{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 0;border-bottom:1px solid var(--ink4);
+}
+.lb-row:last-child{border:none;}
+.lb-rank{
+  font-family:'Bebas Neue',sans-serif;font-size:32px;
+  color:var(--ink5);width:28px;text-align:center;line-height:1;
+}
+.lb-rank.r1{color:var(--gold);}
+.lb-rank.r2{color:var(--soft);}
+.lb-rank.r3{color:#8B5E3C;}
+.lb-name{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.06em;flex:1;}
+.lb-profit{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.04em;color:var(--gold2);}
+.lb-profit.neg{color:#C0392B;}
+
+.multiplier-ref{
+  background:var(--ink3);border:1px solid var(--ink4);
+  border-radius:4px;padding:16px;
+}
+.mr-title{font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:var(--dim);margin-bottom:12px;}
+.mr-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--ink4);}
+.mr-row:last-child{border:none;}
+.mr-label{font-size:11px;color:var(--muted);}
+.mr-val{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--gold);}
+
+/* ── SHOP TABLE ── */
+.qty-btn{
+  background:#FFFFFF;border:2px solid #CCCCCC;border-radius:3px;
+  color:#111111;font-size:16px;width:28px;height:28px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;line-height:1;padding:0;
+}
+.qty-btn:hover{background:#F0F4FF;border-color:var(--accent);color:var(--accent);}
+table tr:hover td{background:rgba(21,88,160,0.03);}
+table td{border-bottom:1px solid var(--ink5);}
+table tr:last-child td{border-bottom:none;}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--ink3);border:1px solid var(--gold);border-radius:4px;
+  padding:12px 24px;font-size:12px;letter-spacing:0.1em;
+  color:var(--gold);z-index:9000;
+  opacity:0;transition:all .3s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.85);
+  z-index:500;display:none;align-items:center;justify-content:center;
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:var(--ink3);border:1px solid var(--ink4);border-radius:6px;
+  padding:32px;max-width:480px;width:90%;position:relative;
+}
+.modal-title{
+  font-family:'Bebas Neue',sans-serif;font-size:28px;
+  letter-spacing:0.06em;color:var(--gold);margin-bottom:8px;
+}
+.modal-body{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:24px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;}
+
+/* ── ASSEMBLE FILM SELECTOR ── */
+.film-tabs{display:flex;gap:4px;margin-bottom:16px;}
+.film-tab{
+  background:var(--ink3);border:1px solid var(--ink4);
+  border-radius:3px;padding:8px 16px;cursor:pointer;
+  font-size:11px;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--muted);transition:all .15s;
+}
+.film-tab.active{background:rgba(200,169,81,0.1);border-color:rgba(200,169,81,0.3);color:var(--gold);}
+.film-tab:hover:not(.active){border-color:var(--dim);color:var(--soft);}
+
+/* ── COLOR SYSTEM REFERENCE ── */
+.color-ref-bar{
+  display:flex;gap:6px;margin-bottom:24px;
+  background:var(--ink3);border:1px solid var(--ink4);
+  border-radius:4px;padding:12px 16px;flex-wrap:wrap;align-items:center;
+}
+.cref-item{display:flex;align-items:center;gap:6px;}
+.cref-chip{width:18px;height:18px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;}
+.cref-label{font-size:10px;color:var(--dim);letter-spacing:0.08em;}
+.cref-sep{width:1px;height:20px;background:var(--ink5);}
+
+/* util */
+.flex-row{display:flex;align-items:center;gap:12px;}
+.spacer{flex:1;}
+.mt16{margin-top:16px;}
+.mt8{margin-top:8px;}
+.text-muted{color:var(--muted);}
+.text-gold{color:var(--gold);}
+/* ── HIDE NUMBER SPINNERS ── */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+input[type=number] { -moz-appearance:textfield; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════
+     TITLE SCREEN
+══════════════════════════════════ -->
+<div id="screen-title" class="screen active">
+  <div class="title-content">
+    <div class="title-eyebrow">A Science Fiction Film Studio Game</div>
+    <div class="title-main">HOLLY<span>WOOD</span></div>
+    <div class="title-sub">Four studios. One box office. May the best vision win.</div>
+    <div class="title-team-setup">
+      <div class="setup-label">Name Your Studios</div>
+      <div class="team-name-inputs">
+        <div class="team-name-row">
+          <div class="team-dot" style="background:#D4574A;"></div>
+          <input class="team-input" id="t1" value="" maxlength="20">
+        </div>
+        <div class="team-name-row">
+          <div class="team-dot" style="background:#D4874A;"></div>
+          <input class="team-input" id="t2" value="" maxlength="20">
+        </div>
+        <div class="team-name-row">
+          <div class="team-dot" style="background:#4A9D7A;"></div>
+          <input class="team-input" id="t3" value="" maxlength="20">
+        </div>
+        <div class="team-name-row">
+          <div class="team-dot" style="background:#4A7AD4;"></div>
+          <input class="team-input" id="t4" value="" maxlength="20">
+        </div>
+      </div>
+      <button class="btn-start" onclick="startGame()">Open the Studio Gates</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     GAME SCREENS (shared header)
+══════════════════════════════════ -->
+<div id="screen-game" class="screen" style="flex-direction:column;background:#FAFAFA;">
+  <header class="game-header">
+    <div class="header-logo">HOLLYWOOD</div>
+    <div class="header-phase" id="header-phase-label">ASSEMBLE TEAM</div>
+    <div class="header-teams" id="header-teams"></div>
+
+  </header>
+
+  <!-- DRAFT PHASE -->
+  <div id="phase-draft" class="phase-wrap" style="display:none;">
+    <div class="phase-header">
+      <div class="phase-num">Phase Two</div>
+      <div class="phase-title">ASSEMBLE TEAM</div>
+      <div class="phase-desc">Each team independently purchases 3 Scripts, 3 Cast, and 3 Crew. Choose any mix of star tiers. Higher stars cost more but impress directors and boost film quality. Advertising budget carries over to production.</div>
+    </div>
+
+    <div id="shop-tables"></div>
+
+    <div class="mt16 flex-row" style="gap:12px;flex-wrap:wrap;">
+      <button class="btn btn-gold" onclick="finishDraft()">Done Shopping → Sign Directors</button>
+      <button class="btn" onclick="autoAssignDraft()" style="border-color:var(--dim);color:var(--soft);">⚡ Auto-Fill All Teams</button>
+      <div style="font-size:11px;color:var(--muted);" id="shop-status"></div>
+    </div>
+  </div>
+
+  <!-- DIRECTOR PHASE -->
+  <div id="phase-directors" class="phase-wrap" style="display:none;">
+    <div class="phase-header">
+      <div class="phase-num">Phase Three</div>
+      <div class="phase-title">SIGN DIRECTORS</div>
+      <div class="phase-desc">Offer each director a flat fee + % of their film's box office revenue. Directors may accept, counter, or decline based on the quality of your roster. Each team signs 2 directors — each director can helm up to 2 of your 3 films.</div>
+    </div>
+    <div class="dir-progress" id="dir-progress-bar"></div>
+    <div class="whose-turn-banner" id="dir-turn-banner">
+      <div class="wtb-label">Offering Studio</div>
+      <div class="wtb-team" id="dir-turn-name">—</div>
+      <div class="wtb-count" id="dir-turn-count">0 / 2 signed</div>
+    </div>
+    <div class="director-grid" id="director-grid"></div>
+  </div>
+
+  <!-- ASSEMBLE PHASE -->
+  <div id="phase-assemble" class="phase-wrap" style="display:none;">
+    <div class="phase-header">
+      <div class="phase-num">Phase Four</div>
+      <div class="phase-title">ASSEMBLE MOVIES</div>
+      <div class="phase-desc">Assign your Director, Script, Cast, and Crew to each of 3 films. Set an advertising budget ($10M min) and choose a release season. Film quality × ad budget determines your market share.</div>
+    </div>
+    <div class="release-strip" id="release-strip"></div>
+
+    <div class="film-tabs" id="film-tabs"></div>
+    <div class="assemble-layout" id="assemble-grid"></div>
+    <div class="mt16 flex-row">
+      <button class="btn btn-gold" onclick="lockAllFilms()">Lock All Films & See Results →</button>
+      <div style="font-size:11px;color:var(--muted);margin-left:12px;" id="assemble-status"></div>
+    </div>
+  </div>
+
+  <!-- RESULTS PHASE -->
+  <div id="phase-results" class="phase-wrap" style="display:none;">
+    <div class="phase-header">
+      <div class="phase-num">Phase Five</div>
+      <div class="phase-title">BOX OFFICE RESULTS</div>
+      <div class="phase-desc">Revenue is split by release window. If a film has the best film quality <em>and</em> the highest budget in its window, it takes 80% of the pool. Otherwise, all films share proportionally by score × budget.</div>
+    </div>
+    <div class="results-layout">
+      <div class="results-main" id="results-windows"></div>
+      <div class="results-sidebar">
+        <div class="leaderboard" id="leaderboard"></div>
+        <div class="multiplier-ref">
+          <div class="mr-title">Quality Multipliers</div>
+          <div class="mr-row"><div class="mr-label">Elite avg ★5.0</div><div class="mr-val">3.0×</div></div>
+          <div class="mr-row"><div class="mr-label">Strong avg ★4.0</div><div class="mr-val">2.0×</div></div>
+          <div class="mr-row"><div class="mr-label">Solid avg ★3.0</div><div class="mr-val">1.4×</div></div>
+          <div class="mr-row"><div class="mr-label">Modest avg ★2.0</div><div class="mr-val">0.8×</div></div>
+          <div class="mr-row"><div class="mr-label">Weak avg ★1.0</div><div class="mr-val">0.4×</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Confirm</div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  GAME DATA
+// ════════════════════════════════════════════════════════
+const COLORS = ['red','orange','yellow','green','blue','purple','grey','black'];
+const COLOR_HEX = {red:'#C0392B',orange:'#D4681A',yellow:'#C8A20A',green:'#1E8449',blue:'#1F6FA3',purple:'#7D3C98',grey:'#7F8C8D',black:'#2a2a2a'};
+const COLOR_LABEL = {red:'R',orange:'O',yellow:'Y',green:'G',blue:'B',purple:'P',grey:'★',black:'✕'};
+// ── STAR TIER SYSTEM ──
+const CAST_TIERS  = [
+  {stars:1, price:10,  label:'Unknowns'},
+  {stars:2, price:15,  label:'Rising Talent'},
+  {stars:3, price:25,  label:'Established Names'},
+  {stars:4, price:35,  label:'A-List Ensemble'},
+  {stars:5, price:50,  label:'Marquee Stars'},
+];
+const CREW_TIERS  = [
+  {stars:1, price:5,   label:'Entry Crew'},
+  {stars:2, price:7,   label:'Journeymen'},
+  {stars:3, price:9,   label:'Skilled Crew'},
+  {stars:4, price:11,  label:'Elite Crew'},
+  {stars:5, price:15,  label:'Award-Winning Crew'},
+];
+const SCRIPT_TIERS = [
+  {stars:1, price:1,   label:'Spec Script'},
+  {stars:2, price:3,   label:'Polished Draft'},
+  {stars:3, price:5,   label:'Proven Writer'},
+  {stars:4, price:7,   label:'WGA Award Finalist'},
+  {stars:5, price:10,  label:'Acclaimed Original'},
+];
+function starStr(n) { return '★'.repeat(n) + '☆'.repeat(5-n); }
+function teamAvgStars(team) {
+  const all = [...team.purchases.cast, ...team.purchases.crew, ...team.purchases.scripts];
+  if(!all.length) return 0;
+  const totalStarWeight = all.reduce((s,p) => s + p.stars * p.qty, 0);
+  const totalQty = all.reduce((s,p) => s + p.qty, 0);
+  return totalQty ? totalStarWeight / totalQty : 0;
+}
+
+const RELEASE_WINDOWS = [
+  {id:'summer', name:'Summer', pool:400},
+  {id:'fall',   name:'Fall',   pool:600},
+  {id:'winter', name:'Winter', pool:1000},
+];
+
+const HARMONY_MULTIPLIER = {4:3.0, 3:2.0, 2:1.4, 1:0.8, 0:0.4};
+
+// photo: filename from your GitHub repo (e.g. 'vera-okafor.jpg')
+// minStars: minimum avg star quality across cast+crew+scripts the director will accept (overridable with $)
+const DIRECTOR_POOL = [
+  {name:"Vera Okafor",    style:"Visceral action, practical effects",       photo:"dir-01.jpg",   minFee:14, minPct:6, minStars:2.5, stars:4},
+  {name:"Marcus Lund",    style:"Cerebral sci-fi, intricate world-building",photo:"dir-02.jpg",  minFee:16, minPct:7, minStars:3.0, stars:4},
+  {name:"Cole Whitmore",  style:"High-concept crowd-pleasers, fast pacing", photo:"dir-03.jpg", minFee:12, minPct:5, minStars:2.0, stars:3},
+  {name:"Daria Morel",    style:"Epic space opera, sweeping franchise DNA", photo:"dir-04.jpg",     minFee:20, minPct:8, minStars:3.5, stars:5},
+  {name:"Tobias Rhenn",   style:"Eco-thriller, naturalistic performance",   photo:"dir-05.jpg",   minFee:8,  minPct:4, minStars:1.5, stars:2},
+  {name:"Lena Zhao",      style:"Wuxia-influenced, poetic action",          photo:"dir-06.jpg",   minFee:18, minPct:7, minStars:3.0, stars:5},
+  {name:"Petra Hamm",     style:"Psychological sci-fi, unreliable reality", photo:"dir-07.jpg",  minFee:13, minPct:6, minStars:2.5, stars:4},
+  {name:"River Castillo", style:"Neo-noir, rain-soaked dystopias",          photo:"dir-08.jpg",   minFee:11, minPct:5, minStars:2.0, stars:3},
+  {name:"Yael Okonjo",    style:"Afrofuturist spectacle, vibrant palette",  photo:"dir-09.jpg",minFee:14, minPct:6, minStars:2.5, stars:4},
+  {name:"Sam Eriksen",    style:"Kaiju-scale destruction, crowd hype",      photo:"dir-10.jpg",   minFee:13, minPct:6, minStars:2.0, stars:3},
+  {name:"Bo Sung",        style:"Techno-thriller, corporate dystopia",      photo:"dir-11.jpg",    minFee:14, minPct:6, minStars:2.5, stars:4},
+  {name:"Freya Holt",     style:"Body horror, transgressive imagery",       photo:"dir-12.jpg",  minFee:8,  minPct:4, minStars:1.5, stars:2},
+];
+
+// ════════════════════════════════════════════════════════
+//  GAME STATE
+// ════════════════════════════════════════════════════════
+
+const SCIFI_ADJ = ['Stellar','Void','Crimson','Neon','Iron','Fractured','Last','Dark','Silent','Zero','Pale','Ghost','Quantum','Binary','Hollow','Ember','Signal','Distant','Deep','Broken','Final','Lost','Rogue','Orbital','Frozen'];
+const SCIFI_NOUN = ['Protocol','Meridian','Horizon','Array','Cascade','Drift','Echo','Exodus','Colony','Archive','Rift','Veil','Pulse','Storm','Frequency','Circuit','Vector','Epoch','Orbit','Gravity','Axiom','Sequence','Prism','Threshold','Lattice'];
+function genScifiTitle() {
+  const a = SCIFI_ADJ[Math.floor(Math.random()*SCIFI_ADJ.length)];
+  const n = SCIFI_NOUN[Math.floor(Math.random()*SCIFI_NOUN.length)];
+  return a + ' ' + n;
+}
+
+const TEAM_COLORS_CSS = ['#D4574A','#D4874A','#4A9D7A','#4A7AD4','#C8A20A','#9B59B6'];
+const STARTING_BUDGET = 500; // $M
+
+let G = {}; // game state
+
+function initState(names) {
+  G = {
+    teams: names.map((n,i) => ({
+      id: i,
+      name: n,
+      color: TEAM_COLORS_CSS[i],
+      budget: STARTING_BUDGET,
+      purchases: {
+        scripts: Array.from({length:5}, (_,i) => ({stars:i+1, qty:0, tier:SCRIPT_TIERS[i]})),
+        cast:    Array.from({length:5}, (_,i) => ({stars:i+1, qty:0, tier:CAST_TIERS[i]})),
+        crew:    Array.from({length:5}, (_,i) => ({stars:i+1, qty:0, tier:CREW_TIERS[i]})),
+      },
+      directors: [],     // {dirIdx, flatFee, pct}
+      films: Array.from({length:3}, () => ({
+        title: genScifiTitle(),
+        director: null,   // dirIdx
+        script: null,     // {name, color}
+        cast: null,
+        crew: null,
+        budget: null,
+        window: null,
+        locked: false,
+        title: ''
+      }))
+    })),
+    directorPool: DIRECTOR_POOL.map((d,i) => ({...d, idx:i, signedBy:null, passed:false, currentBidder:0})),
+    phase: 'draft',
+    draftTurn: 0,            // team index
+    dirTurn: 0,
+    currentDirIdx: 0,
+    filmTab: 0,              // which film index (0-2) we're editing
+  };
+}
+
+
+
+// ════════════════════════════════════════════════════════
+//  NAVIGATION & UTILS
+// ════════════════════════════════════════════════════════
+function startGame() {
+  const names = ['t1','t2','t3','t4'].map(id => document.getElementById(id).value.trim() || `Team ${id.slice(1)}`);
+  initState(names);
+  document.getElementById('screen-title').classList.remove('active');
+  document.getElementById('screen-game').classList.add('active');
+  renderHeader();
+  showPhase('draft');
+  renderDraft();
+}
+
+function showPhase(phase) {
+  ['draft','directors','assemble','results'].forEach(p => {
+    document.getElementById('phase-'+p).style.display = p===phase ? '' : 'none';
+  });
+  const labels = {draft:'Assemble Team', directors:'Director Signing', assemble:'Assemble Films', results:'Box Office Results'};
+  document.getElementById('header-phase-label').textContent = labels[phase];
+  G.phase = phase;
+  renderHeader();
+}
+
+function renderHeader() {
+  const ht = document.getElementById('header-teams');
+  ht.innerHTML = G.teams.map(t =>
+    `<div class="header-team${G.draftTurn===t.id && G.phase==='draft' ? ' active-team' : ''}"
+      style="color:${t.color};">${t.name}</div>`
+  ).join('');
+  const activeTeam = G.teams[G.phase==='draft' ? G.draftTurn : G.dirTurn] || G.teams[0];
+  
+}
+
+function toast(msg, dur=2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), dur);
+}
+
+function modal(title, body, buttons) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = body;
+  const acts = document.getElementById('modal-actions');
+  acts.innerHTML = '';
+  buttons.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'btn ' + (b.gold ? 'btn-gold' : '');
+    btn.textContent = b.label;
+    btn.onclick = () => { closeModal(); b.action(); };
+    acts.appendChild(btn);
+  });
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+// ════════════════════════════════════════════════════════
+//  PHASE 2: SHOPPING
+// ════════════════════════════════════════════════════════
+function renderDraft() {
+  renderShopTables();
+  renderShopStatus();
+  renderHeader();
+}
+
+function teamSpend(team) {
+  let total = 0;
+  ['cast','crew','scripts'].forEach(type => {
+    const tiers = type==='cast'?CAST_TIERS:type==='crew'?CREW_TIERS:SCRIPT_TIERS;
+    team.purchases[type].forEach((p,i) => { total += p.qty * tiers[i].price; });
+  });
+  return total;
+}
+
+function renderShopTables() {
+  const container = document.getElementById('shop-tables');
+  container.innerHTML = '';
+
+  const cats = [
+    {key:'cast',    label:'CAST',    icon:'🎭', tiers:CAST_TIERS},
+    {key:'crew',    label:'CREW',    icon:'⚙️', tiers:CREW_TIERS},
+    {key:'scripts', label:'SCRIPTS', icon:'📄', tiers:SCRIPT_TIERS},
+  ];
+
+  // Section per category, 4 team cards per section
+  cats.forEach(cat => {
+    const section = document.createElement('div');
+    section.style.cssText = 'margin-bottom:20px;';
+
+    // Section label
+    const label = document.createElement('div');
+    label.style.cssText = 'font-family:"Bebas Neue",sans-serif;font-size:13px;letter-spacing:0.25em;color:#555;margin-bottom:8px;';
+    label.textContent = `${cat.icon}  ${cat.label}  —  ${cat.tiers.map(t=>'★'+t.stars+' $'+t.price+'M').join('  ·  ')}`;
+    section.appendChild(label);
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:12px;';
+
+    G.teams.forEach(t => {
+      const card = document.createElement('div');
+      card.style.cssText = 'background:#FFFFFF;border:1px solid #DDDDDD;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);';
+
+      const catTotal = t.purchases[cat.key].reduce((s,p)=>s+p.qty,0); // target: 3
+      const catSpend = t.purchases[cat.key].reduce((s,p,i)=>s+p.qty*cat.tiers[i].price,0);
+      const tcol = catTotal===3?'#1E8449':catTotal>3?'#C0392B':'var(--dim)';
+
+      let h = `
+        <div style="padding:8px 12px;border-bottom:2px solid ${t.color};display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:0.08em;color:${t.color};">${t.name}</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#B8860B;font-weight:700;" id="catspend-${cat.key}-${t.id}">$${catSpend}M</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:17px;color:${tcol};" id="total-${cat.key}-${t.id}">${catTotal}<span style="font-size:10px;color:var(--dim);">/3</span></div>
+          </div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr style="border-bottom:1px solid var(--ink5);">
+            ${cat.tiers.map(tier=>`
+              <th style="padding:5px 4px;text-align:center;font-weight:400;">
+                <div style="font-size:14px;color:#B8860B;font-weight:700;">★${tier.stars}</div>
+                <div style="font-size:10px;color:#555;font-weight:600;">$${tier.price}M</div>
+              </th>`).join('')}
+          </tr></thead>
+          <tbody><tr>
+            ${cat.tiers.map(tier => {
+              const p = t.purchases[cat.key][tier.stars-1];
+              return `<td style="padding:8px 4px;text-align:center;">
+                <input type="number" min="0" max="6" value="${p.qty}"
+                  id="qty-${cat.key}-${tier.stars}-${t.id}"
+                  oninput="setQty('${cat.key}',${tier.stars-1},${t.id},this)"
+                  style="width:38px;background:var(--ink4);border:1px solid var(--ink5);border-radius:3px;color:#111111;font-family:'Bebas Neue',sans-serif;font-size:18px;text-align:center;padding:4px 0;outline:none;border-color:#999 !important;">
+              </td>`;
+            }).join('')}
+          </tr></tbody>
+        </table>`;
+
+      card.innerHTML = h;
+      row.appendChild(card);
+    });
+
+    section.appendChild(row);
+    container.appendChild(section);
+  });
+
+  // Summary bar: total spend + budget remaining per team
+  const summary = document.createElement('div');
+  summary.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:4px;';
+  G.teams.forEach(t => {
+    const spent = teamSpend(t);
+    const div = document.createElement('div');
+    div.id = `summary-${t.id}`;
+    div.style.cssText = `background:#FFFFFF;border:1px solid #DDDDDD;border-radius:6px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-top:3px solid ${t.color};box-shadow:0 1px 4px rgba(0,0,0,0.06);`;
+    div.innerHTML = `
+      <div>
+        <div style="font-size:9px;letter-spacing:0.18em;color:#888;margin-bottom:2px;font-weight:600;">TOTAL OUTLAY</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#B8860B;" id="outlay-${t.id}">$${spent}M</div>
+      </div>
+`;
+    summary.appendChild(div);
+  });
+  container.appendChild(summary);
+}
+
+function setQty(type, tierIdx, teamId, inputEl) {
+  const team = G.teams[teamId];
+  const p = team.purchases[type][tierIdx];
+  const tiers = type==='cast'?CAST_TIERS:type==='crew'?CREW_TIERS:SCRIPT_TIERS;
+  const tier = tiers[tierIdx];
+  const newQty = Math.max(0, parseInt(inputEl.value) || 0);
+
+  // Refund old qty, then cap new qty by budget + 6-limit
+  team.budget += p.qty * tier.price;
+  const othersTotal = team.purchases[type].reduce((s,x,i) => s + (i===tierIdx ? 0 : x.qty), 0);
+  const maxByLimit = Math.max(0, 3 - othersTotal);
+  const maxByBudget = Math.floor(team.budget / tier.price);
+  const capped = Math.min(newQty, maxByLimit, maxByBudget);
+
+  p.qty = capped;
+  team.budget -= capped * tier.price;
+  inputEl.value = capped;
+
+  // Refresh cat total + cat spend header
+  const catTotal = team.purchases[type].reduce((s,x)=>s+x.qty,0);
+  const catSpend = team.purchases[type].reduce((s,x,i)=>s+x.qty*tiers[i].price,0);
+  const tcol = catTotal===3?'#1E8449':catTotal>3?'#C0392B':'var(--dim)';
+  const totalEl = document.getElementById(`total-${type}-${teamId}`);
+  if(totalEl) totalEl.innerHTML = `${catTotal}<span style="font-size:10px;color:var(--dim);">/3</span>`;
+  if(totalEl) totalEl.style.color = tcol;
+  const catSpendEl = document.getElementById(`catspend-${type}-${teamId}`);
+  if(catSpendEl) catSpendEl.textContent = `$${catSpend}M`;
+
+  // Refresh summary outlay + remaining
+  const spent = teamSpend(team);
+  const outlayEl = document.getElementById(`outlay-${teamId}`);
+  if(outlayEl) outlayEl.textContent = `$${spent}M`;
+
+
+  renderShopStatus();
+  renderHeader();
+}
+
+function renderShopStatus() {
+  const problems = [];
+  G.teams.forEach(t => {
+    ['cast','crew','scripts'].forEach(type => {
+      const total = t.purchases[type].reduce((s,p)=>s+p.qty,0);
+      if(total !== 3) problems.push(`${t.name} needs 3 ${type} (has ${total})`);
+    });
+  });
+  const el = document.getElementById('shop-status');
+  if(!el) return;
+  el.textContent = problems.length === 0 ? '✓ All teams ready' : `${problems.length} issue${problems.length>1?'s':''} remaining`;
+  el.style.color = problems.length === 0 ? '#1E8449' : 'var(--muted)';
+}
+
+function passDraft() {} // no-op in shopping mode
+
+function autoAssignDraft() {
+  // Give each team a balanced mix — 2× 3-star as base, fill up/down based on budget
+  G.teams.forEach(team => {
+    ['cast','crew','scripts'].forEach(type => {
+      const tiers = type==='cast' ? CAST_TIERS : type==='crew' ? CREW_TIERS : SCRIPT_TIERS;
+      // Reset first (refund)
+      team.purchases[type].forEach((p,i) => {
+        team.budget += p.qty * tiers[i].price;
+        p.qty = 0;
+      });
+      // Buy 1× each of 3-star, 2-star, 1-star as default spread
+      const plan = [1,1,1,0,0]; // indices 0=1★ 1=2★ 2=3★ 3=4★ 4=5★
+      plan.forEach((qty, tierIdx) => {
+        const cost = qty * tiers[tierIdx].price;
+        if(team.budget >= cost) {
+          team.purchases[type][tierIdx].qty = qty;
+          team.budget -= cost;
+        }
+      });
+    });
+  });
+  renderDraft();
+  toast('⚡ Auto-filled all teams with a balanced spread');
+}
+
+function finishDraft() {
+  const problems = [];
+  G.teams.forEach(t => {
+    ['cast','crew','scripts'].forEach(type => {
+      const total = t.purchases[type].reduce((s,p)=>s+p.qty,0);
+      if(total !== 3) problems.push(`${t.name}: ${total}/3 ${type}`);
+    });
+  });
+  if(problems.length > 0) {
+    modal('Shopping Incomplete', `Every team needs exactly 6 of each type:<br><br>${problems.map(p=>`• ${p}`).join('<br>')}`,
+      [{label:'Back', action:()=>{}}]);
+    return;
+  }
+  modal('Proceed to Director Signing?',
+    'All teams have their cast, crew, and scripts. Now sign your directors.',
+    [{label:'Back', action:()=>{}},
+     {label:'Sign Directors →', gold:true, action:()=>{ showPhase('directors'); renderDirectors(); }}]
+  );
+}
+
+// ════════════════════════════════════════════════════════
+//  PHASE 3: DIRECTORS
+// ════════════════════════════════════════════════════════
+function renderDirectors() {
+  renderDirProgress();
+  renderDirTurnBanner();
+  const grid = document.getElementById('director-grid');
+  grid.innerHTML = '';
+  G.directorPool.forEach((dir, idx) => {
+    grid.appendChild(buildDirCard(dir, idx));
+  });
+}
+
+function renderDirProgress() {
+  const bar = document.getElementById('dir-progress-bar');
+  bar.innerHTML = G.teams.map(t => {
+    const count = t.directors.length;
+    const pips = Array.from({length:2}, (_,i) => `<div class="dpt-pip${i<count?' filled':''}"></div>`).join('');
+    return `<div class="dir-prog-team">
+      <div class="dpt-name" style="color:${t.color}">${t.name}</div>
+      <div class="dpt-count">${count}<span style="font-size:14px;color:var(--dim);">/3</span></div>
+      <div class="dpt-pips">${pips}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderDirTurnBanner() {
+  const team = G.teams[G.dirTurn];
+  document.getElementById('dir-turn-name').textContent = team.name;
+  document.getElementById('dir-turn-name').style.color = team.color;
+  document.getElementById('dir-turn-count').textContent = `${team.directors.length} / 2 signed`;
+}
+
+function buildDirCard(dir, idx) {
+  const div = document.createElement('div');
+  const signed = dir.signedBy !== null;
+  const passed = dir.passed;
+  div.className = 'dir-card' + (signed ? ' signed' : passed ? ' passed' : ' available');
+  div.id = `dir-card-${idx}`;
+
+  const signerTeam = signed ? G.teams[dir.signedBy] : null;
+  const dirStars = '★'.repeat(dir.stars) + '<span style="color:var(--ink5);">★</span>'.repeat(5-dir.stars);
+  const photoSrc = `photos/${dir.photo}`;
+
+  div.innerHTML = `
+    <div class="dir-top">
+      <div class="dir-avatar" style="background:none;overflow:hidden;border-radius:50%;border:2px solid var(--ink5);">
+        <img src="${photoSrc}" alt="${dir.name}"
+          style="width:52px;height:52px;object-fit:cover;object-position:center top;"
+          onerror="this.style.display='none';this.parentElement.textContent='🎬';">
+      </div>
+      <div class="dir-info">
+        <div class="dir-name">${dir.name}</div>
+        <div class="dir-style">${dir.style}</div>
+        <div style="font-size:13px;color:var(--gold);letter-spacing:0.05em;margin:4px 0 2px;">${dirStars}</div>
+        <div class="dir-fee-note">Looking for: $${dir.minFee}M + ${dir.minPct}%</div>
+      </div>
+    </div>
+    ${signed
+      ? `<div class="signed-tag">✓ Signed · ${signerTeam.name} · $${dir.dealFee}M + ${dir.dealPct}%</div>`
+      : passed
+        ? `<div class="dir-status rejected">Passed — no deal reached</div>`
+        : `<div class="dir-offer-row" id="offer-row-${idx}">
+            <span class="offer-symbol">$</span>
+            <input class="offer-inp flat" id="fee-${idx}" type="number" placeholder="Fee (M)" min="0">
+            <span class="offer-symbol">+</span>
+            <input class="offer-inp pct" id="pct-${idx}" type="number" placeholder="%" min="0" max="100">
+            <span class="offer-symbol">%</span>
+            <button class="btn btn-gold" onclick="submitOffer(${idx})" id="offer-btn-${idx}">Offer</button>
+          </div>
+          <div class="dir-status pending" id="dir-status-${idx}">Awaiting offer from <strong>${G.teams[G.dirTurn].name}</strong></div>`
+    }
+  `;
+  return div;
+}
+
+function submitOffer(idx) {
+  const dir = G.directorPool[idx];
+  const team = G.teams[G.dirTurn];
+  const fee = parseFloat(document.getElementById(`fee-${idx}`).value)||0;
+  const pct = parseFloat(document.getElementById(`pct-${idx}`).value)||0;
+  const statusEl = document.getElementById(`dir-status-${idx}`);
+  const btn = document.getElementById(`offer-btn-${idx}`);
+
+  if(fee<=0 && pct<=0) { toast('Enter a fee and/or percentage'); return; }
+  if(pct > 99) { toast('Cannot offer 100% or more equity!'); return; }
+  if(team.budget < fee) { toast('Not enough budget for that fee!'); return; }
+  if(team.directors.length >= 2) { toast('Already have 2 directors!'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '...';
+  const result = evaluateDirectorOffer(dir, team, fee, pct);
+
+  if(result.verdict === 'accept') {
+    dir.signedBy = G.dirTurn;
+    dir.dealFee = fee;
+    dir.dealPct = pct;
+    team.budget -= fee;
+    team.directors.push({dirIdx:idx, flatFee:fee, pct});
+    modal(
+      `✓ ${dir.name} — SIGNED`,
+      `<div style="font-size:15px;color:var(--gold);margin-bottom:8px;">"${result.message}"</div>
+       <div style="font-size:13px;color:var(--muted);">Deal: <strong>$${fee}M</strong> flat + <strong>${pct}%</strong> box office · signed with <strong style="color:${team.color}">${team.name}</strong></div>`,
+      [{label:'Excellent →', gold:true, action:() => {
+        const card = document.getElementById(`dir-card-${idx}`);
+        if(card) card.replaceWith(buildDirCard(dir, idx));
+        renderDirProgress();
+        renderHeader();
+        if(team.directors.length >= 2) advanceDirTurn();
+        else renderDirTurnBanner();
+        checkAllDirectorsDone();
+      }}]
+    );
+  } else if(result.verdict === 'counter') {
+    modal(
+      `↩ ${dir.name} — COUNTER OFFER`,
+      `<div style="font-size:15px;color:#D4874A;margin-bottom:8px;">"${result.message}"</div>
+       <div style="font-size:13px;color:var(--muted);">Counter: <strong>$${result.counterFee}M</strong> flat + <strong>${result.counterPct}%</strong> box office</div>
+       <div style="font-size:11px;color:var(--dim);margin-top:8px;">Accept their terms, or go back and make a new offer.</div>`,
+      [
+        {label:'Decline', action:() => {
+          btn.disabled = false; btn.textContent = 'Offer';
+          rotateDirOfferTeam(idx);
+        }},
+        {label:`Accept $${result.counterFee}M + ${result.counterPct}%`, gold:true, action:() => {
+          if(team.budget < result.counterFee) { toast('Not enough budget for counter fee!'); return; }
+          dir.signedBy = G.dirTurn;
+          dir.dealFee = result.counterFee;
+          dir.dealPct = result.counterPct;
+          team.budget -= result.counterFee;
+          team.directors.push({dirIdx:idx, flatFee:result.counterFee, pct:result.counterPct});
+          const card = document.getElementById(`dir-card-${idx}`);
+          if(card) card.replaceWith(buildDirCard(dir, idx));
+          renderDirProgress();
+          renderHeader();
+          if(team.directors.length >= 2) advanceDirTurn();
+          else renderDirTurnBanner();
+          checkAllDirectorsDone();
+        }}
+      ]
+    );
+  } else {
+    const reason = dir._rejectReason || 'Offer declined';
+    modal(
+      `✗ ${dir.name} — DECLINED`,
+      `<div style="font-size:15px;color:#C0392B;margin-bottom:8px;">"${result.message}"</div>
+       <div style="font-size:12px;color:var(--dim);">Reason: ${reason}</div>`,
+      [{label:'Back to Offers', action:() => {
+        btn.disabled = false; btn.textContent = 'Offer';
+        rotateDirOfferTeam(idx);
+      }}]
+    );
+  }
+}
+
+function evaluateDirectorOffer(dir, team, fee, pct) {
+  // Purely money-based negotiation.
+  // moneyScore = fee + (pct * 1.5) — equity is valuable to directors
+  // threshold is the director's "looking for" value, softened by jitter
+  // Directors are willing to accept somewhat below their ask; 
+  // 70–100% of ask = likely accept, 50–70% = counter, <50% = decline
+  const moneyScore    = fee + pct * 1.5;
+  const baseAsk       = dir.minFee + dir.minPct * 1.5;
+  // Add mild random personality — some directors are hungrier than others
+  const personality   = 0.85 + Math.random() * 0.30; // 0.85–1.15× their ask
+  const effectiveAsk  = baseAsk * personality;
+  const ratio         = moneyScore / effectiveAsk; // 1.0 = exactly their ask
+  const jitter        = (Math.random() - 0.5) * 0.08; // ±4%
+
+  if(ratio + jitter >= 0.78) {
+    // Accept — anything roughly 78%+ of ask gets a yes
+    const acceptLines = [
+      "Let's make something extraordinary.",
+      "You had me at the offer. Let's get to work.",
+      "Consider it done.",
+      "You've got yourself a deal.",
+      "I've been wanting to work with your studio. Done.",
+      "Works for me. Let's shoot.",
+    ];
+    return { verdict:'accept', message: acceptLines[Math.floor(Math.random()*acceptLines.length)] };
+  }
+
+  if(ratio + jitter >= 0.50) {
+    // Counter — in the ballpark but not quite there
+    // Push toward ~90% of their ask
+    const target = effectiveAsk * 0.90;
+    const gap = target - moneyScore;
+    // Split the gap: some in fee, some in pct
+    const extraFee = Math.ceil(gap * 0.55 / 1.0);
+    const extraPct = Math.ceil((gap * 0.45) / 1.5);
+    const counterFee = Math.max(fee + 1, Math.ceil(fee + extraFee));
+    const counterPct = Math.min(49, Math.max(pct + 1, Math.ceil(pct + extraPct)));
+    const counterLines = [
+      "You're close. Here's what works for me.",
+      "I'm interested — meet me halfway.",
+      "Good faith offer. Let me come back with something.",
+      "Almost there. One adjustment and we're done.",
+      "I like the project. Let's find a number that works.",
+    ];
+    return { verdict:'counter', message: counterLines[Math.floor(Math.random()*counterLines.length)], counterFee, counterPct };
+  }
+
+  // Decline — too far below ask
+  dir._rejectReason = `Offer too far below expectations ($${dir.minFee}M + ${dir.minPct}% is the ballpark)`;
+  const declineLines = [
+    "I appreciate the call, but the offer isn't there.",
+    "My agent's already on the phone with another studio.",
+    "Come back when the numbers make sense.",
+    "That's not a serious offer. Pass.",
+    "The project interests me — the deal doesn't.",
+  ];
+  return { verdict:'decline', message: declineLines[Math.floor(Math.random()*declineLines.length)] };
+}
+
+function rotateDirOfferTeam(idx) {
+  // Show next team on this director card
+  let next = (G.dirTurn + 1) % 4;
+  let loops = 0;
+  while(loops < 4) {
+    const t = G.teams[next];
+    if(t.directors.length < 2) break;
+    next = (next+1)%4;
+    loops++;
+  }
+  if(loops >= 4) {
+    // mark director passed
+    G.directorPool[idx].passed = true;
+    const card = document.getElementById(`dir-card-${idx}`);
+    card.replaceWith(buildDirCard(G.directorPool[idx], idx));
+  } else {
+    const statusEl = document.getElementById(`dir-status-${idx}`);
+    if(statusEl) {
+      statusEl.textContent = `Next offer: ${G.teams[next].name}`;
+      statusEl.className = 'dir-status pending';
+    }
+  }
+}
+
+function advanceDirTurn() {
+  let next = (G.dirTurn + 1) % 4;
+  let loops = 0;
+  while(loops < 4) {
+    if(G.teams[next].directors.length < 2) break;
+    next = (next+1)%4;
+    loops++;
+  }
+  if(loops < 4) {
+    G.dirTurn = next;
+    renderDirTurnBanner();
+    // Update all available director cards' status
+    document.querySelectorAll('.dir-status.pending').forEach(el => {
+      if(el.id.startsWith('dir-status-')) {
+        const idx = parseInt(el.id.replace('dir-status-',''));
+        el.innerHTML = `Awaiting offer from <strong>${G.teams[G.dirTurn].name}</strong>`;
+      }
+    });
+  }
+}
+
+function checkAllDirectorsDone() {
+  const allSigned = G.teams.every(t => t.directors.length >= 2);
+  if(allSigned) {
+    setTimeout(()=>{
+      modal('All Directors Signed!',
+        'Every studio has 2 directors. Time to assemble your films — each director can helm up to 2 of your 3 films.',
+        [{label:'Back', action:()=>{}},
+         {label:'Assemble Films →', gold:true, action:()=>{ showPhase('assemble'); renderAssemble(); }}]
+      );
+    }, 600);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  PHASE 4: ASSEMBLE
+// ════════════════════════════════════════════════════════
+function renderAssemble() {
+  renderReleasStrip();
+  renderFilmTabs();
+  renderAssembleGrid();
+  updateAssembleStatus();
+}
+
+function renderReleasStrip() {
+  const strip = document.getElementById('release-strip');
+  strip.innerHTML = '<span style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);margin-right:8px;">Windows:</span>';
+  RELEASE_WINDOWS.forEach(w => {
+    const count = countFilmsInWindow(w.id);
+    const crowded = count >= 4;
+    const div = document.createElement('div');
+    div.className = 'rs-month' + (crowded ? ' crowded' : count===0 ? ' open' : '');
+    div.innerHTML = `<div class="rs-name">${w.name.toUpperCase()}</div><div class="rs-pool">$${w.pool}M</div><div class="rs-films">${count} film${count!==1?'s':''}</div>`;
+    strip.appendChild(div);
+  });
+}
+
+function countFilmsInWindow(windowId) {
+  let count = 0;
+  G.teams.forEach(t => t.films.forEach(f => { if(f.window===windowId) count++; }));
+  return count;
+}
+
+function renderFilmTabs() {
+  const tabs = document.getElementById('film-tabs');
+  tabs.innerHTML = Array.from({length:3}, (_,i) =>
+    `<div class="film-tab${G.filmTab===i?' active':''}" onclick="setFilmTab(${i})">Film ${i+1}</div>`
+  ).join('');
+}
+
+function setFilmTab(i) {
+  G.filmTab = i;
+  renderFilmTabs();
+  renderAssembleGrid();
+}
+
+function renderAssembleGrid() {
+  const grid = document.getElementById('assemble-grid');
+  grid.innerHTML = '';
+  const fi = G.filmTab;
+  G.teams.forEach(team => {
+    const film = team.films[fi];
+    grid.appendChild(buildMovieCard(team, film, fi));
+  });
+  renderReleasStrip();
+  updateAssembleStatus();
+}
+
+function buildMovieCard(team, film, fi) {
+  const card = document.createElement('div');
+  card.className = 'movie-card';
+  card.id = `mc-${team.id}-${fi}`;
+
+  // Director options: this team's signed directors not yet used in other films
+  // Directors can be used on up to 4 films — count how many times each is already used (excluding this film)
+  const dirUsageCount = {};
+  team.directors.forEach(d => { dirUsageCount[d.dirIdx] = 0; });
+  team.films.forEach((f, i) => {
+    if(i !== fi && f.director !== null && dirUsageCount[f.director] !== undefined) {
+      dirUsageCount[f.director]++;
+    }
+  });
+  const availDirs = team.directors.filter(d => dirUsageCount[d.dirIdx] < 2);
+
+  // Build star tier options for each slot type
+  // Each team has a pool of purchased tiers; each film uses 1 slot from any tier (tracked by slot index)
+  // Films store: {type:'cast', stars:3} etc.
+  function tierOptions(type, filmKey, tiers) {
+    const purchased = team.purchases[type];
+    // Count how many of each tier are used by other films
+    const used = {};
+    team.films.forEach((f,i) => {
+      if(i !== fi && f[filmKey] !== null) {
+        const k = f[filmKey].stars;
+        used[k] = (used[k]||0) + 1;
+      }
+    });
+    let opts = `<option value="">— choose —</option>`;
+    tiers.forEach(tier => {
+      const bought = purchased[tier.stars-1].qty;
+      const usedCount = used[tier.stars]||0;
+      const avail = bought - usedCount;
+      const sel = film[filmKey]?.stars === tier.stars ? ' selected' : '';
+      const starStr = '★'.repeat(tier.stars);
+      const disabled = avail <= 0 && film[filmKey]?.stars !== tier.stars ? ' disabled' : '';
+      opts += `<option value="${tier.stars}"${sel}${disabled}>${starStr} ${tier.label} · $${tier.price}M (${avail} avail)</option>`;
+    });
+    return opts;
+  }
+
+  const scriptOptions = tierOptions('scripts', 'script', SCRIPT_TIERS);
+  const castOptions   = tierOptions('cast',    'cast',   CAST_TIERS);
+  const crewOptions   = tierOptions('crew',    'crew',   CREW_TIERS);
+
+  const windowOptions = `<option value="">— choose —</option>` +
+    RELEASE_WINDOWS.map(w => `<option value="${w.id}"${film.window===w.id?' selected':''}>${w.name} · $${w.pool}M pool</option>`).join('');
+
+  const harmonyScore = computeHarmony(team, film);
+  const harmonySegs = Array.from({length:4}, (_,i) =>
+    `<div class="hb-seg${i < harmonyScore.matches ? ' filled' : ''}"></div>`
+  ).join('');
+
+  const dirDir = film.director !== null ? G.directorPool[film.director] : null;
+  const starSwatch = (s) => s ? `<span style="font-size:12px;color:var(--gold);">${'★'.repeat(s.stars)}</span>` : `<span style="color:var(--ink5);font-size:11px;">—</span>`;
+
+  const titleVal = film.title || '';
+
+  card.innerHTML = `
+    <div class="movie-card-header">
+      <div class="mc-team-stripe" style="background:${team.color};"></div>
+      <div class="mc-team-name" style="color:${team.color};">${team.name}</div>
+      <div class="mc-film-num">Film ${fi+1}</div>
+    </div>
+    <div class="movie-card-body">
+      <div style="font-family:'Playfair Display',serif;font-size:14px;color:var(--gold);padding:7px 2px 10px;border-bottom:1px solid var(--ink4);margin-bottom:10px;letter-spacing:0.03em;">${titleVal}</div>
+      <div class="mc-slot">
+        <div class="mc-slot-icon">🎬</div>
+        <div class="mc-slot-type">Director</div>
+        <select class="mc-select" style="flex:1;" onchange="setFilmPiece(${team.id},${fi},'director',this.value)">${
+          `<option value="">— choose —</option>` +
+          availDirs.map(d => {
+            const dir = G.directorPool[d.dirIdx];
+            const uses = dirUsageCount[d.dirIdx];
+            const dStars = '★'.repeat(dir.stars);
+            return `<option value="${d.dirIdx}"${film.director===d.dirIdx?' selected':''}>${dir.name} ${dStars} · ${uses}/2 films</option>`;
+          }).join('')
+        }</select>
+      </div>
+      <div class="mc-slot">
+        <div class="mc-slot-icon">📄</div>
+        <div class="mc-slot-type">Script</div>
+        <select class="mc-select" style="flex:1;" onchange="setFilmPiece(${team.id},${fi},'script',this.value)">${scriptOptions}</select>
+        ${starSwatch(film.script)}
+      </div>
+      <div class="mc-slot">
+        <div class="mc-slot-icon">🎭</div>
+        <div class="mc-slot-type">Cast</div>
+        <select class="mc-select" style="flex:1;" onchange="setFilmPiece(${team.id},${fi},'cast',this.value)">${castOptions}</select>
+        ${starSwatch(film.cast)}
+      </div>
+      <div class="mc-slot">
+        <div class="mc-slot-icon">⚙️</div>
+        <div class="mc-slot-type">Crew</div>
+        <select class="mc-select" style="flex:1;" onchange="setFilmPiece(${team.id},${fi},'crew',this.value)">${crewOptions}</select>
+        ${starSwatch(film.crew)}
+      </div>
+      <div class="mc-settings">
+
+        <div class="mc-setting">
+          <div class="mc-setting-label">Release</div>
+          <select class="mc-select" onchange="setFilmWindow(${team.id},${fi},this.value)">${windowOptions}</select>
+        </div>
+      </div>
+      <div class="mc-harmony">
+        <div class="mc-harmony-label">Film Quality · ${harmonyScore.label}</div>
+        <div class="harmony-bar">${harmonySegs}</div>
+        <div class="harmony-score-text">${harmonyScore.multiplier}× multiplier · ${harmonyScore.desc}</div>
+      </div>
+    </div>
+  `;
+  return card;
+}
+
+function setFilmTitle(teamId, fi, val) {
+  G.teams[teamId].films[fi].title = val;
+}
+
+function setFilmPiece(teamId, fi, piece, val) {
+  const team = G.teams[teamId];
+  const film = team.films[fi];
+  if(piece === 'director') {
+    film.director = val === '' ? null : parseInt(val);
+  } else {
+    if(val === '') {
+      film[piece] = null;
+    } else {
+      const stars = parseInt(val);
+      const tierMap = {script: SCRIPT_TIERS, cast: CAST_TIERS, crew: CREW_TIERS};
+      const tier = tierMap[piece].find(t => t.stars === stars);
+      film[piece] = tier ? {stars, label: tier.label, price: tier.price} : null;
+    }
+  }
+  renderAssembleGrid();
+}
+
+function setFilmBudget(teamId, fi, val) {
+  G.teams[teamId].films[fi].budget = parseFloat(val)||null;
+  updateAssembleStatus();
+}
+
+function setFilmWindow(teamId, fi, val) {
+  G.teams[teamId].films[fi].window = val||null;
+  renderReleasStrip();
+  updateAssembleStatus();
+}
+
+function updateAssembleStatus() {
+  const problems = [];
+  G.teams.forEach(t => {
+    t.films.forEach((f,i) => {
+      if(!f.director || !f.script || !f.cast || !f.crew) problems.push(`${t.name} Film ${i+1}: missing pieces`);
+      
+      else if(!f.window) problems.push(`${t.name} Film ${i+1}: no release window`);
+    });
+  });
+  const el = document.getElementById('assemble-status');
+  if(problems.length===0) el.textContent = '✓ All films ready';
+  else el.textContent = `${problems.length} film${problems.length!==1?'s':''} need attention`;
+  el.style.color = problems.length===0 ? '#1E8449' : 'var(--muted)';
+}
+
+function computeHarmony(team, film) {
+  // Harmony = average star quality of the 3 assigned pieces (script/cast/crew) + director stars
+  // Normalized to a 0-4 scale (each piece contributes 0-1 based on star rating / 5)
+  const pieces = [];
+  if(film.director !== null) pieces.push(G.directorPool[film.director].stars);
+  if(film.script) pieces.push(film.script.stars);
+  if(film.cast)   pieces.push(film.cast.stars);
+  if(film.crew)   pieces.push(film.crew.stars);
+
+  if(pieces.length === 0) return {matches:0, label:'No pieces assigned', multiplier:'—', desc:'Assign pieces to see quality score', avgStars:0};
+
+  const avg = pieces.reduce((a,b)=>a+b,0) / pieces.length;
+  // Map avg 1-5 stars to match score 0-4
+  const score = Math.min(4, Math.max(0, Math.round((avg - 1) * (4/4))));
+
+  const labels = {4:'ELITE ★★★★★', 3:'STRONG ★★★★', 2:'SOLID ★★★', 1:'MODEST ★★', 0:'WEAK ★'};
+  const descs  = {4:'All-star lineup', 3:'High quality team', 2:'Reliable mid-tier', 1:'Budget production', 0:'Entry-level'};
+  const mults  = {4:'3.0', 3:'2.0', 2:'1.4', 1:'0.8', 0:'0.4'};
+
+  return {matches:score, label:labels[score], multiplier:mults[score], desc:descs[score], avgStars:avg};
+}
+
+
+
+function autoAssignAll() {
+  // Distribute purchased star tiers across 6 films per team
+  // Strategy: spread stars evenly across films for balanced quality
+  G.teams.forEach(team => {
+    const keyMap = {scripts:'script', cast:'cast', crew:'crew'};
+    const tierMap = {scripts:SCRIPT_TIERS, cast:CAST_TIERS, crew:CREW_TIERS};
+
+    ['scripts','cast','crew'].forEach(type => {
+      const filmKey = keyMap[type];
+      const tiers = tierMap[type];
+      // Build a flat list of all purchased slots
+      const slots = [];
+      team.purchases[type].forEach(p => {
+        for(let i=0;i<p.qty;i++) slots.push({stars:p.stars, label:tiers[p.stars-1].label, price:tiers[p.stars-1].price});
+      });
+      // Sort descending by stars, then spread across films
+      slots.sort((a,b)=>b.stars-a.stars);
+      team.films.forEach((f,i) => { f[filmKey] = slots[i] || null; });
+    });
+  });
+  renderAssembleGrid();
+  toast('⚡ Star tiers auto-assigned across all films');
+}
+
+function lockAllFilms() {
+  const problems = [];
+  G.teams.forEach(t => {
+    // Check director usage counts
+    const dirUsage = {};
+    t.films.forEach((f,i) => {
+      if(f.director !== null) dirUsage[f.director] = (dirUsage[f.director]||0) + 1;
+    });
+    Object.entries(dirUsage).forEach(([idx, count]) => {
+      if(count > 4) problems.push(`${t.name}: ${G.directorPool[idx].name} assigned to ${count} films (max 4)`);
+    });
+    t.films.forEach((f,i) => {
+      if((f.director === null || f.director === undefined) || !f.script || !f.cast || !f.crew) problems.push(`${t.name} Film ${i+1}: missing pieces`);
+      else if(!f.window) problems.push(`${t.name} Film ${i+1}: no release window`);
+    });
+  });
+  if(problems.length > 0) {
+    modal('Incomplete Films', `These films need attention:<br><br>${problems.map(p=>`• ${p}`).join('<br>')}`,
+      [{label:'Go Back', action:()=>{}}]);
+    return;
+  }
+  modal('Lock All Films?',
+    'This will finalize all 24 films and calculate box office results. You cannot edit after this.',
+    [{label:'Keep Editing', action:()=>{}},
+     {label:'Release the Films →', gold:true, action:()=>{ computeResults(); showPhase('results'); renderResults(); }}]
+  );
+}
+
+// ════════════════════════════════════════════════════════
+//  PHASE 5: RESULTS
+// ════════════════════════════════════════════════════════
+let RESULTS = {}; // computed results
+
+function computeResults() {
+  RESULTS = {windows:{}, teams:{}};
+  G.teams.forEach(t => { RESULTS.teams[t.id] = {totalRevenue:0, totalBudget:0, totalProfit:0}; });
+
+  RELEASE_WINDOWS.forEach(w => {
+    // Gather all films in this window
+    const films = [];
+    G.teams.forEach(t => {
+      t.films.forEach((f,fi) => {
+        if(f.window !== w.id) return;
+        const harmony = computeHarmony(t, f);
+        const hmult = parseFloat(harmony.multiplier) || 0.4;
+        const budget = 100; // fixed ad budget removed from UI — use standard value
+        const score = hmult * budget;
+        films.push({
+          team: t,
+          film: f,
+          fi,
+          harmony,
+          hmult,
+          avgStars: harmony.avgStars || 0,
+          budget,
+          score,
+          revenue: 0,
+        });
+      });
+    });
+
+    if(films.length === 0) {
+      RESULTS.windows[w.id] = {films:[], pool:w.pool, unclaimed:w.pool};
+      return;
+    }
+
+    // Sort by score descending
+    films.sort((a,b) => b.score - a.score);
+
+    // Check winner-take-most rule:
+    // If top film has BOTH best harmony (by multiplier) AND highest budget → takes 80%
+    const topFilm = films[0];
+    const topHarmony = topFilm.hmult;
+    const topBudget = topFilm.budget;
+    const topHarmonyIsUnique = films.filter(f=>f.hmult===topHarmony).length===1;
+    const topBudgetIsUnique  = films.filter(f=>f.budget===topBudget).length===1;
+
+    if(topHarmonyIsUnique && topBudgetIsUnique && films.length > 1) {
+      // Winner takes 80%
+      topFilm.revenue = Math.round(w.pool * 0.80);
+      const remainder = w.pool - topFilm.revenue;
+      const others = films.slice(1);
+      const totalOtherScore = others.reduce((s,f)=>s+f.score,0);
+      others.forEach(f => {
+        f.revenue = totalOtherScore > 0 ? Math.round(remainder * f.score / totalOtherScore) : Math.round(remainder / others.length);
+      });
+    } else {
+      // Proportional by score
+      const totalScore = films.reduce((s,f)=>s+f.score,0);
+      films.forEach(f => {
+        f.revenue = totalScore > 0 ? Math.round(w.pool * f.score / totalScore) : Math.round(w.pool / films.length);
+      });
+    }
+
+    // Tally team results
+    films.forEach(f => {
+      const dirDeal = f.team.directors.find(d=>d.dirIdx===f.film.director);
+      const dirCut = dirDeal ? Math.round(f.revenue * dirDeal.pct / 100) : 0;
+      const netRevenue = f.revenue - dirCut;
+      const profit = netRevenue - f.budget;
+      f.dirCut = dirCut;
+      f.netRevenue = netRevenue;
+      f.profit = profit;
+      RESULTS.teams[f.team.id].totalRevenue += f.revenue;
+      RESULTS.teams[f.team.id].totalBudget += f.budget;
+      RESULTS.teams[f.team.id].totalProfit += profit;
+    });
+
+    RESULTS.windows[w.id] = {films, pool:w.pool};
+  });
+}
+
+function renderResults() {
+  const container = document.getElementById('results-windows');
+  container.innerHTML = '';
+
+  RELEASE_WINDOWS.forEach(w => {
+    const wr = RESULTS.windows[w.id];
+    if(!wr || wr.films.length === 0) return;
+
+    const div = document.createElement('div');
+    div.className = 'window-result';
+
+    const sorted = [...wr.films];
+    const topScoreFilm = sorted[0];
+
+    let filmRows = sorted.map((f,rank) => {
+      const isWinner = rank === 0;
+      const harmonyChips = Array.from({length:4}, (_,i) =>
+        `<div class="hchip" style="background:${i<f.harmony.matches?'var(--gold)':'var(--ink5)'}"></div>`
+      ).join('');
+      const title = f.film.title || `${f.team.name} Film ${f.fi+1}`;
+      return `<div class="wr-film-row${isWinner?' winner':''}">
+        <div>
+          <div class="wfr-title">${isWinner?'<span class="crown">👑</span>':''}${title}</div>
+          <div class="wfr-studio" style="color:${f.team.color}">${f.team.name}</div>
+        </div>
+        <div>
+          <div class="wfr-label">Quality</div>
+          <div style="display:flex;gap:3px;margin-top:3px;">${harmonyChips}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">${f.hmult}× · avg ★${f.avgStars ? f.avgStars.toFixed(1) : "—"}</div>
+        </div>
+        <div>
+          <div class="wfr-label">Ad Budget</div>
+          <div class="wfr-value" style="color:var(--text2);">$${f.budget}M</div>
+        </div>
+        <div>
+          <div class="wfr-label">Revenue</div>
+          <div class="wfr-value" style="color:var(--gold);font-size:20px;">$${f.revenue}M</div>
+          ${f.dirCut>0?`<div style="font-size:9px;color:var(--dim);">Dir: −$${f.dirCut}M</div>`:''}
+        </div>
+        <div>
+          <div class="wfr-label">Profit</div>
+          <div class="wfr-value wfr-profit ${f.profit>=0?'pos':'neg'}" style="font-size:20px;">
+            ${f.profit>=0?'+':''}$${f.profit}M
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    div.innerHTML = `
+      <div class="wr-header">
+        <div class="wr-month" style="font-size:28px;letter-spacing:0.2em;">${w.name.toUpperCase()} SEASON</div>
+        <div>
+          <div class="wr-pool" style="font-size:36px;">$${w.pool}M</div>
+          <div class="wr-pool-label">BOX OFFICE POOL</div>
+        </div>
+        <div style="margin-left:auto;font-size:11px;color:var(--muted);">${wr.films.length} film${wr.films.length!==1?'s':''} competing</div>
+      </div>
+      <div class="wr-films">
+        <div style="display:grid;grid-template-columns:3fr 80px 80px 80px 80px;gap:8px;padding:8px 20px;border-bottom:1px solid var(--ink4);">
+          <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);">Film</div>
+          <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);">Quality</div>
+          <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);">Ad Budget</div>
+          <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);">Revenue</div>
+          <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);">Profit</div>
+        </div>
+        ${filmRows}
+      </div>
+    `;
+    container.appendChild(div);
+  });
+
+  // Leaderboard
+  const lbData = G.teams.map(t => ({
+    team: t,
+    ...RESULTS.teams[t.id]
+  })).sort((a,b)=>b.totalProfit-a.totalProfit);
+
+  const rankClass = ['r1','r2','r3',''];
+  const lb = document.getElementById('leaderboard');
+  lb.innerHTML = `<div class="lb-title">Final Studio Rankings — Net Profit</div>` +
+    lbData.map((item,i) => `
+      <div class="lb-row">
+        <div class="lb-rank ${rankClass[i]}">${i+1}</div>
+        <div>
+          <div class="lb-name" style="color:${item.team.color}">${item.team.name}</div>
+          <div style="font-size:10px;color:var(--dim);">Rev $${item.totalRevenue}M · Spend $${item.totalBudget}M</div>
+        </div>
+        <div class="lb-profit ${item.totalProfit<0?'neg':''}">${item.totalProfit>=0?'+':''}$${item.totalProfit}M</div>
+      </div>
+    `).join('');
+}
+</script>
+</body>
+</html>
