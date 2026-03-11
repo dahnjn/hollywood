@@ -774,8 +774,7 @@ function initState(names) {
         crew: null,
         budget: null,
         window: null,
-        locked: false,
-        title: ''
+        locked: false
       }))
     })),
     directorPool: DIRECTOR_POOL.map((d,i) => ({...d, idx:i, signedBy:null, passed:false, currentBidder:0})),
@@ -1094,6 +1093,41 @@ function buildDirCard(dir, idx) {
   const dirStars = '★'.repeat(dir.stars) + '<span style="color:var(--ink5);">★</span>'.repeat(5-dir.stars);
   const photoSrc = `photos/${dir.photo}`;
 
+  // Build roster panel for the currently active bidding team
+  const activeTeam = G.teams[G.dirTurn];
+  function rosterRows(team) {
+    const cats = [
+      { key:'cast',    icon:'🎭', label:'CAST',    tiers:CAST_TIERS },
+      { key:'crew',    icon:'⚙️', label:'CREW',    tiers:CREW_TIERS },
+      { key:'scripts', icon:'📄', label:'SCRIPTS', tiers:SCRIPT_TIERS },
+    ];
+    return cats.map(cat => {
+      const items = [];
+      team.purchases[cat.key].forEach(p => {
+        if(p.qty > 0) {
+          const tier = cat.tiers[p.stars - 1];
+          const stars = '★'.repeat(p.stars) + '<span style="color:#ddd;">★</span>'.repeat(5 - p.stars);
+          items.push(`<span style="display:inline-flex;align-items:center;gap:3px;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:3px;padding:2px 6px;margin:2px 2px 0 0;font-size:10px;">
+            ${stars} <span style="color:#555;font-size:9px;">${tier.label}</span>${p.qty > 1 ? `<span style="color:#999;font-size:9px;">×${p.qty}</span>` : ''}
+          </span>`);
+        }
+      });
+      if(items.length === 0) return '';
+      return `<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;">
+        <span style="font-size:9px;letter-spacing:0.1em;color:#999;text-transform:uppercase;width:44px;flex-shrink:0;padding-top:4px;">${cat.label}</span>
+        <div style="flex:1;display:flex;flex-wrap:wrap;">${items.join('')}</div>
+      </div>`;
+    }).join('');
+  }
+
+  const rosterHtml = !signed && !passed ? `
+    <div style="border-top:1px solid #eee;margin-top:10px;padding-top:10px;">
+      <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#aaa;margin-bottom:6px;">
+        ${activeTeam.name}'s roster
+      </div>
+      ${rosterRows(activeTeam)}
+    </div>` : '';
+
   div.innerHTML = `
     <div class="dir-top">
       <div class="dir-avatar" style="background:none;overflow:hidden;border-radius:50%;border:3px solid var(--ink5);">
@@ -1112,7 +1146,8 @@ function buildDirCard(dir, idx) {
       ? `<div class="signed-tag">✓ Signed · ${signerTeam.name} · $${dir.dealFee}M + ${dir.dealPct}%</div>`
       : passed
         ? `<div class="dir-status rejected">Passed — no deal reached</div>`
-        : `<div class="dir-offer-row" id="offer-row-${idx}">
+        : `${rosterHtml}
+          <div class="dir-offer-row" id="offer-row-${idx}" style="margin-top:10px;">
             <span class="offer-symbol">$</span>
             <input class="offer-inp flat" id="fee-${idx}" type="number" placeholder="Fee (M)" min="0">
             <span class="offer-symbol">+</span>
@@ -1372,7 +1407,7 @@ function countFilmsInWindow(windowId) {
 function renderFilmTabs() {
   const tabs = document.getElementById('film-tabs');
   tabs.innerHTML = Array.from({length:3}, (_,i) =>
-    `<div class="film-tab${G.filmTab===i?' active':''}" onclick="setFilmTab(${i})">Film ${i+1}</div>`
+    `<div class="film-tab${G.filmTab===i?' active':''}" onclick="setFilmTab(${i})" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${G.teams[0].films[i].title}">${G.teams[0].films[i].title || 'Film '+(i+1)}</div>`
   ).join('');
 }
 
@@ -1457,7 +1492,6 @@ function buildMovieCard(team, film, fi) {
     <div class="movie-card-header">
       <div class="mc-team-stripe" style="background:${team.color};"></div>
       <div class="mc-team-name" style="color:${team.color};">${team.name}</div>
-      <div class="mc-film-num">Film ${fi+1}</div>
     </div>
     <div class="movie-card-body">
       <div style="font-family:'Playfair Display',serif;font-size:14px;color:var(--gold);padding:7px 2px 10px;border-bottom:1px solid var(--ink4);margin-bottom:10px;letter-spacing:0.03em;">${titleVal}</div>
@@ -1864,7 +1898,7 @@ function renderResults() {
       const harmonyChips = Array.from({length:4}, (_,i) =>
         `<div class="hchip" style="background:${i<f.harmony.matches?'var(--gold)':'var(--ink5)'}"></div>`
       ).join('');
-      const title = f.film.title || `${f.team.name} Film ${f.fi+1}`;
+      const title = f.film.title || `${f.team.name} Film ${f.fi+1}`; // title always set
       return `<div class="wr-film-row${isWinner?' winner':''}">
         <div>
           <div class="wfr-title">${isWinner?'<span class="crown">👑</span>':''}${title}</div>
