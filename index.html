@@ -275,9 +275,9 @@ body{
 .dir-card.available{border-color:rgba(200,169,81,0.15);}
 .dir-top{display:flex;gap:14px;margin-bottom:14px;}
 .dir-avatar{
-  width:52px;height:52px;border-radius:50%;
+  width:80px;height:80px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-size:22px;flex-shrink:0;background:var(--ink4);
+  font-size:32px;flex-shrink:0;background:var(--ink4);
 }
 .dir-info{flex:1;}
 .dir-name{font-family:'Playfair Display',serif;font-size:16px;margin-bottom:2px;}
@@ -356,7 +356,7 @@ body{
 .mc-select{
   background:var(--ink4);border:1px solid var(--ink5);border-radius:3px;
   color:var(--text);font-family:'Barlow',sans-serif;font-size:11px;
-  padding:5px 8px;outline:none;cursor:pointer;max-width:160px;width:100%;
+  padding:5px 8px;outline:none;cursor:pointer;width:100%;min-width:0;
 }
 .mc-budget-input{
   background:var(--ink4);border:1px solid var(--ink5);border-radius:3px;
@@ -620,7 +620,7 @@ input[type=number] { -moz-appearance:textfield; }
     <div class="phase-header">
       <div class="phase-num">Phase Four</div>
       <div class="phase-title">ASSEMBLE MOVIES</div>
-      <div class="phase-desc">Assign your Director, Script, Cast, and Crew to each of 3 films. Set an advertising budget ($10M min) and choose a release season. Film quality × ad budget determines your market share.</div>
+      <div class="phase-desc">Assign your Director, Script, Cast, and Crew to each of 3 films. Set a Marketing budget and choose a release window. <strong>Quality dominates</strong> — a great film with no marketing beats a poor film with massive spend. Marketing provides a boost (up to +50%) that breaks ties and separates close competitors.</div>
     </div>
     <div class="release-strip" id="release-strip"></div>
 
@@ -638,7 +638,7 @@ input[type=number] { -moz-appearance:textfield; }
     <div class="phase-header">
       <div class="phase-num">Phase Five</div>
       <div class="phase-title">BOX OFFICE RESULTS</div>
-      <div class="phase-desc">Revenue is split by release window. If a film has the best film quality <em>and</em> the highest budget in its window, it takes 80% of the pool. Otherwise, all films share proportionally by score × budget.</div>
+      <div class="phase-desc">Revenue is split by release window. Films compete on <strong>Score = Quality× × (1 + Marketing Boost)</strong>. Quality multiplier ranges from 0.3× (all ★1) to 3.8× (all ★5). Marketing adds up to +50% on top. Films share the pool proportionally by score.</div>
     </div>
     <div class="results-layout">
       <div class="results-main" id="results-windows"></div>
@@ -1096,16 +1096,16 @@ function buildDirCard(dir, idx) {
 
   div.innerHTML = `
     <div class="dir-top">
-      <div class="dir-avatar" style="background:none;overflow:hidden;border-radius:50%;border:2px solid var(--ink5);">
+      <div class="dir-avatar" style="background:none;overflow:hidden;border-radius:50%;border:3px solid var(--ink5);">
         <img src="${photoSrc}" alt="${dir.name}"
-          style="width:52px;height:52px;object-fit:cover;object-position:center top;"
+          style="width:80px;height:80px;object-fit:cover;object-position:center top;"
           onerror="this.style.display='none';this.parentElement.textContent='🎬';">
       </div>
       <div class="dir-info">
         <div class="dir-name">${dir.name}</div>
         <div class="dir-style">${dir.style}</div>
         <div style="font-size:13px;color:var(--gold);letter-spacing:0.05em;margin:4px 0 2px;">${dirStars}</div>
-        <div class="dir-fee-note">Looking for: $${dir.minFee}M${dir.minPct > 0 ? ' + ' + dir.minPct + '%' : ' flat fee only'}</div>
+        <div class="dir-fee-note" style="font-style:italic;color:#999;">Make an offer — terms undisclosed</div>
       </div>
     </div>
     ${signed
@@ -1476,16 +1476,32 @@ function buildMovieCard(team, film, fi) {
         ${starSwatch(film.crew)}
       </div>
       <div class="mc-settings">
-
+        <div class="mc-setting">
+          <div class="mc-setting-label">Marketing $</div>
+          <div style="display:flex;align-items:center;gap:4px;flex:1;">
+            <input class="mc-budget-input" type="number" min="0" placeholder="0"
+              value="${film.budget || ''}"
+              onchange="setFilmBudget(${team.id},${fi},this.value)"
+              style="width:70px;background:#fff;border:2px solid #ccc;color:#111;border-radius:3px;padding:4px 6px;font-size:12px;text-align:right;">
+            <span style="font-size:11px;color:#888;">M</span>
+          </div>
+        </div>
         <div class="mc-setting">
           <div class="mc-setting-label">Release</div>
           <select class="mc-select" onchange="setFilmWindow(${team.id},${fi},this.value)">${windowOptions}</select>
         </div>
       </div>
       <div class="mc-harmony">
-        <div class="mc-harmony-label">Film Quality · ${harmonyScore.label}</div>
+        <div class="mc-harmony-label">QUALITY SCORE · ${harmonyScore.label}</div>
         <div class="harmony-bar">${harmonySegs}</div>
-        <div class="harmony-score-text">${harmonyScore.multiplier}× multiplier · ${harmonyScore.desc}</div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:4px;">
+          <div style="font-size:11px;color:#333;font-weight:600;">
+            ${harmonyScore.multiplier === '0' || harmonyScore.multiplier === 0 ? '—' : harmonyScore.multiplier + '×'} quality
+            ${film.budget ? `· +${Math.round(Math.min(0.50, film.budget/200)*100)}% marketing` : '· +0% marketing'}
+          </div>
+          <div style="font-size:10px;color:#888;">${harmonyScore.desc}</div>
+        </div>
+        <div style="font-size:9px;color:#aaa;margin-top:5px;letter-spacing:0.05em;">SCORE = Quality× · (1 + Marketing Boost)</div>
       </div>
     </div>
   `;
@@ -1541,25 +1557,35 @@ function updateAssembleStatus() {
 }
 
 function computeHarmony(team, film) {
-  // Harmony = average star quality of the 3 assigned pieces (script/cast/crew) + director stars
-  // Normalized to a 0-4 scale (each piece contributes 0-1 based on star rating / 5)
   const pieces = [];
-  if(film.director !== null) pieces.push(G.directorPool[film.director].stars);
+  if(film.director !== null && film.director !== undefined) pieces.push(G.directorPool[film.director].stars);
   if(film.script) pieces.push(film.script.stars);
   if(film.cast)   pieces.push(film.cast.stars);
   if(film.crew)   pieces.push(film.crew.stars);
 
-  if(pieces.length === 0) return {matches:0, label:'No pieces assigned', multiplier:'—', desc:'Assign pieces to see quality score', avgStars:0};
+  if(pieces.length === 0) return {matches:0, label:'No pieces assigned', multiplier:0, qualityScore:0, qualityMult:0, desc:'Assign all 4 pieces to score', avgStars:0};
 
   const avg = pieces.reduce((a,b)=>a+b,0) / pieces.length;
-  // Map avg 1-5 stars to match score 0-4
-  const score = Math.min(4, Math.max(0, Math.round((avg - 1) * (4/4))));
 
-  const labels = {4:'ELITE ★★★★★', 3:'STRONG ★★★★', 2:'SOLID ★★★', 1:'MODEST ★★', 0:'WEAK ★'};
-  const descs  = {4:'All-star lineup', 3:'High quality team', 2:'Reliable mid-tier', 1:'Budget production', 0:'Entry-level'};
-  const mults  = {4:'3.0', 3:'2.0', 2:'1.4', 1:'0.8', 0:'0.4'};
+  // qualityScore: 0.0 (all ★1) → 1.0 (all ★5)
+  const qualityScore = (avg - 1) / 4;
 
-  return {matches:score, label:labels[score], multiplier:mults[score], desc:descs[score], avgStars:avg};
+  // Exponential quality multiplier — great films vastly outperform mediocre ones
+  // ★1 avg → 0.30×  ★2 → 0.65×  ★3 → 1.30×  ★4 → 2.30×  ★5 → 3.80×
+  const qualityMult = 0.30 + Math.pow(qualityScore, 1.3) * 3.50;
+
+  const barScore = Math.min(4, Math.round(qualityScore * 4));
+  const labels = {4:'ELITE', 3:'STRONG', 2:'SOLID', 1:'MODEST', 0:'WEAK'};
+
+  return {
+    matches: barScore,
+    label: labels[barScore],
+    multiplier: qualityMult.toFixed(2),
+    qualityScore,
+    qualityMult,
+    desc: `Avg ★${avg.toFixed(1)} — director, cast, crew, script`,
+    avgStars: avg
+  };
 }
 
 
@@ -1671,11 +1697,10 @@ function autoAssembleAllFilms() {
     if(dirs[0] !== undefined) { team.films[0].director = dirs[0].dirIdx; team.films[1].director = dirs[0].dirIdx; }
     if(dirs[1] !== undefined) { team.films[2].director = dirs[1].dirIdx; }
 
-    // Assign release windows: best film to Winter, middle to Fall, weakest to Summer
-    // (best film = film 0, since it has the highest-tier pieces)
-    team.films[0].window = 'winter';
-    team.films[1].window = 'fall';
-    team.films[2].window = 'summer';
+    // Assign release windows & default marketing budgets
+    team.films[0].window = 'winter'; team.films[0].budget = 50;
+    team.films[1].window = 'fall';   team.films[1].budget = 30;
+    team.films[2].window = 'summer'; team.films[2].budget = 20;
   });
 
   renderAssemble();
@@ -1726,18 +1751,27 @@ function computeResults() {
       t.films.forEach((f,fi) => {
         if(f.window !== w.id) return;
         const harmony = computeHarmony(t, f);
-        const hmult = parseFloat(harmony.multiplier) || 0.4;
-        const budget = 100; // fixed ad budget removed from UI — use standard value
-        const score = hmult * budget;
+        const qualityMult = harmony.qualityMult || 0.3;
+        const marketing = Math.max(0, parseFloat(f.budget) || 0);
+
+        // SCORING FORMULA:
+        // Quality is primary — exponential multiplier (0.3× to 3.8×)
+        // Marketing adds a diminishing-returns boost: each $10M ≈ +4%, caps around +50%
+        // Final score = qualityMult × (1 + marketingBoost)
+        // This means a great film ($0 marketing) beats a poor film ($100M marketing)
+        const marketingBoost = Math.min(0.50, marketing / 200); // $100M = +25%, $200M = +50% cap
+        const score = qualityMult * (1 + marketingBoost);
+
         films.push({
           team: t,
           film: f,
           fi,
           harmony,
-          hmult,
+          hmult: qualityMult,
           avgStars: harmony.avgStars || 0,
-          budget,
+          budget: marketing,
           score,
+          marketingBoost,
           revenue: 0,
         });
       });
