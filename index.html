@@ -576,7 +576,10 @@ input[type=number] { -moz-appearance:textfield; }
     <div class="header-logo">HOLLYWOOD</div>
     <div class="header-phase" id="header-phase-label">ASSEMBLE TEAM</div>
     <div class="header-teams" id="header-teams"></div>
-
+    <div style="display:flex;gap:6px;margin-left:12px;flex-shrink:0;">
+      <button onclick="saveGame()" style="background:#fff;border:1px solid #ccc;border-radius:3px;padding:5px 12px;font-size:10px;letter-spacing:0.12em;cursor:pointer;color:#333;font-family:'Barlow',sans-serif;font-weight:500;">💾 SAVE</button>
+      <button onclick="loadGame()" style="background:#fff;border:1px solid #ccc;border-radius:3px;padding:5px 12px;font-size:10px;letter-spacing:0.12em;cursor:pointer;color:#333;font-family:'Barlow',sans-serif;font-weight:500;">📂 LOAD</button>
+    </div>
   </header>
 
   <!-- DRAFT PHASE -->
@@ -1970,6 +1973,78 @@ function renderResults() {
       </div>
     `).join('');
 }
+
+// ════════════════════════════════════════════════════════
+//  SAVE / LOAD
+// ════════════════════════════════════════════════════════
+
+function saveGame() {
+  const saveData = {
+    version: 1,
+    timestamp: new Date().toISOString(),
+    phase: G.phase,
+    G: G,
+    RESULTS: RESULTS
+  };
+  const json = JSON.stringify(saveData, null, 2);
+  const blob = new Blob([json], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+
+  // Generate a filename with team names + phase
+  const teamNames = G.teams.map(t => t.name.replace(/\s+/g,'-')).join('_');
+  const phaseLabel = {draft:'assemble-team', directors:'sign-directors', assemble:'assemble-films', results:'results'}[G.phase] || G.phase;
+  const filename = `hollywood_${phaseLabel}_${teamNames}.json`;
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(`💾 Game saved as ${filename}`);
+}
+
+function loadGame() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = evt => {
+      try {
+        const saveData = JSON.parse(evt.target.result);
+        if(!saveData.G || !saveData.phase) throw new Error('Invalid save file');
+
+        // Restore state
+        G = saveData.G;
+        RESULTS = saveData.RESULTS || {};
+
+        // Show game screen and correct phase
+        document.getElementById('screen-title').classList.remove('active');
+        document.getElementById('screen-game').classList.add('active');
+
+        showPhase(G.phase);
+
+        // Re-render the correct phase
+        if(G.phase === 'draft')      { renderDraft(); }
+        if(G.phase === 'directors')  { renderDirectors(); }
+        if(G.phase === 'assemble')   { renderAssemble(); }
+        if(G.phase === 'results')    { renderResults(); }
+
+        const saved = saveData.timestamp ? new Date(saveData.timestamp).toLocaleString() : 'unknown time';
+        toast(`📂 Game loaded — saved ${saved}`);
+      } catch(err) {
+        alert('Could not load save file: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
 </script>
 </body>
 </html>
