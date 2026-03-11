@@ -1085,24 +1085,40 @@ function renderDirTurnBanner() {
   document.getElementById('dir-turn-count').textContent = `${team.directors.length} / 2 signed`;
 }
 
+// ════════════════════════════════════════════════════════
+//  PHASE 3: DIRECTOR CARDS & TURN ENGINE
+// ════════════════════════════════════════════════════════
+
+/*
+  TURN MODEL (clean):
+  - G.dirTurn = index of the team currently making offers (0-3)
+  - One team is "active" at a time. All 12 director cards are visible.
+  - The active team picks ANY available director and submits an offer.
+  - Director responds (accept / counter / decline).
+  - Whatever happens, turn passes to the next team that still needs directors.
+  - A "counter" gives the active team one chance to Accept or Pass before turn moves.
+  - When all teams have 2 directors, phase ends.
+*/
+
 function buildDirCard(dir, idx) {
   const div = document.createElement('div');
-  const signed = dir.signedBy !== null;
+  const signed = dir.signedBy !== null && dir.signedBy !== undefined;
   const passed = dir.passed;
   div.className = 'dir-card' + (signed ? ' signed' : passed ? ' passed' : ' available');
   div.id = `dir-card-${idx}`;
 
-  const signerTeam = signed ? G.teams[dir.signedBy] : null;
-  const dirStars = '★'.repeat(dir.stars) + '<span style="color:var(--ink5);">★</span>'.repeat(5-dir.stars);
-  const photoSrc = `photos/${dir.photo}`;
-
-  // Build roster panel for the currently active bidding team
+  const signerTeam = signed ? G.teams.find(t => t.id === dir.signedBy) : null;
+  const dirStars   = '★'.repeat(dir.stars) + '<span style="color:#ddd;">★</span>'.repeat(5 - dir.stars);
+  const photoSrc   = `photos/${dir.photo}`;
   const activeTeam = G.teams[G.dirTurn];
+  const isMyTurn   = !signed && !passed;
+
+  // Roster chips for the active team
   function rosterRows(team) {
     const cats = [
-      { key:'cast',    icon:'🎭', label:'CAST',    tiers:CAST_TIERS },
-      { key:'crew',    icon:'⚙️', label:'CREW',    tiers:CREW_TIERS },
-      { key:'scripts', icon:'📄', label:'SCRIPTS', tiers:SCRIPT_TIERS },
+      { key:'cast',    label:'CAST',    tiers:CAST_TIERS },
+      { key:'crew',    label:'CREW',    tiers:CREW_TIERS },
+      { key:'scripts', label:'SCRIPTS', tiers:SCRIPT_TIERS },
     ];
     return cats.map(cat => {
       const items = [];
@@ -1110,12 +1126,10 @@ function buildDirCard(dir, idx) {
         if(p.qty > 0) {
           const tier = cat.tiers[p.stars - 1];
           const stars = '★'.repeat(p.stars) + '<span style="color:#ddd;">★</span>'.repeat(5 - p.stars);
-          items.push(`<span style="display:inline-flex;align-items:center;gap:3px;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:3px;padding:2px 6px;margin:2px 2px 0 0;font-size:10px;">
-            ${stars} <span style="color:#555;font-size:9px;">${tier.label}</span>${p.qty > 1 ? `<span style="color:#999;font-size:9px;">×${p.qty}</span>` : ''}
-          </span>`);
+          items.push(`<span style="display:inline-flex;align-items:center;gap:3px;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:3px;padding:2px 6px;margin:2px 2px 0 0;font-size:10px;">${stars} <span style="color:#555;font-size:9px;">${tier.label}</span>${p.qty > 1 ? `<span style="color:#999;font-size:9px;">×${p.qty}</span>` : ''}</span>`);
         }
       });
-      if(items.length === 0) return '';
+      if(!items.length) return '';
       return `<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;">
         <span style="font-size:9px;letter-spacing:0.1em;color:#999;text-transform:uppercase;width:44px;flex-shrink:0;padding-top:4px;">${cat.label}</span>
         <div style="flex:1;display:flex;flex-wrap:wrap;">${items.join('')}</div>
@@ -1123,12 +1137,24 @@ function buildDirCard(dir, idx) {
     }).join('');
   }
 
-  const rosterHtml = !signed && !passed ? `
-    <div style="border-top:1px solid #eee;margin-top:10px;padding-top:10px;">
-      <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#aaa;margin-bottom:6px;">
-        ${activeTeam.name}'s roster
-      </div>
+  const rosterSection = isMyTurn ? `
+    <div style="border-top:1px solid #eee;margin-top:10px;padding-top:8px;">
+      <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#aaa;margin-bottom:6px;">${activeTeam.name}'s roster</div>
       ${rosterRows(activeTeam)}
+    </div>` : '';
+
+  const offerSection = isMyTurn ? `
+    ${rosterSection}
+    <div class="dir-offer-row" id="offer-row-${idx}" style="margin-top:10px;">
+      <span class="offer-symbol">$</span>
+      <input class="offer-inp flat" id="fee-${idx}" type="number" placeholder="Fee (M)" min="0">
+      <span class="offer-symbol">+</span>
+      <input class="offer-inp pct" id="pct-${idx}" type="number" placeholder="%" min="0" max="99">
+      <span class="offer-symbol">%</span>
+      <button class="btn btn-gold" onclick="submitOffer(${idx})" id="offer-btn-${idx}">Offer</button>
+    </div>
+    <div class="dir-status pending" id="dir-status-${idx}">
+      <strong style="color:${activeTeam.color}">${activeTeam.name}</strong> — make your offer
     </div>` : '';
 
   div.innerHTML = `
@@ -1146,220 +1172,118 @@ function buildDirCard(dir, idx) {
       </div>
     </div>
     ${signed
-      ? `<div class="signed-tag">✓ Signed · ${signerTeam.name} · $${dir.dealFee}M + ${dir.dealPct}%</div>`
+      ? `<div class="signed-tag">✓ Signed · ${signerTeam ? signerTeam.name : '?'} · $${dir.dealFee}M + ${dir.dealPct}%</div>`
       : passed
         ? `<div class="dir-status rejected">Passed — no deal reached</div>`
-        : `${rosterHtml}
-          <div class="dir-offer-row" id="offer-row-${idx}" style="margin-top:10px;">
-            <span class="offer-symbol">$</span>
-            <input class="offer-inp flat" id="fee-${idx}" type="number" placeholder="Fee (M)" min="0">
-            <span class="offer-symbol">+</span>
-            <input class="offer-inp pct" id="pct-${idx}" type="number" placeholder="%" min="0" max="100">
-            <span class="offer-symbol">%</span>
-            <button class="btn btn-gold" onclick="submitOffer(${idx})" id="offer-btn-${idx}">Offer</button>
-          </div>
-          <div class="dir-status pending" id="dir-status-${idx}">Awaiting offer from <strong>${G.teams[G.dirTurn].name}</strong></div>`
+        : offerSection
     }
   `;
   return div;
 }
 
 function submitOffer(idx) {
-  const dir = G.directorPool[idx];
+  const dir  = G.directorPool[idx];
   const team = G.teams[G.dirTurn];
-  const fee = parseFloat(document.getElementById(`fee-${idx}`).value)||0;
-  const pct = parseFloat(document.getElementById(`pct-${idx}`).value)||0;
-  const statusEl = document.getElementById(`dir-status-${idx}`);
-  const btn = document.getElementById(`offer-btn-${idx}`);
+  const feeEl = document.getElementById(`fee-${idx}`);
+  const pctEl = document.getElementById(`pct-${idx}`);
+  const btn   = document.getElementById(`offer-btn-${idx}`);
+  const fee   = parseFloat(feeEl ? feeEl.value : 0) || 0;
+  const pct   = parseFloat(pctEl ? pctEl.value : 0) || 0;
 
-  if(fee<=0 && pct<=0) { toast('Enter a fee and/or percentage'); return; }
-  if(pct > 99) { toast('Cannot offer 100% or more equity!'); return; }
-  if(team.budget < fee) { toast('Not enough budget for that fee!'); return; }
-  if(team.directors.length >= 2) { toast('Already have 2 directors!'); return; }
+  if(fee <= 0 && pct <= 0)  { toast('Enter a fee and/or percentage'); return; }
+  if(pct >= 100)             { toast('Cannot offer 100% or more equity!'); return; }
+  if(team.budget < fee)      { toast('Not enough budget for that fee!'); return; }
+  if(team.directors.length >= 2) { toast('Already have 2 directors — skip this one'); return; }
 
-  btn.disabled = true;
-  btn.textContent = '...';
+  if(btn) { btn.disabled = true; btn.textContent = '...'; }
+
   const result = evaluateDirectorOffer(dir, team, fee, pct);
 
   if(result.verdict === 'accept') {
-    dir.signedBy = G.dirTurn;
-    dir.dealFee = fee;
-    dir.dealPct = pct;
-    team.budget -= fee;
-    team.directors.push({dirIdx:idx, flatFee:fee, pct});
+    // Sign the director
+    dir.signedBy  = team.id;
+    dir.dealFee   = fee;
+    dir.dealPct   = pct;
+    team.budget  -= fee;
+    team.directors.push({ dirIdx: idx, flatFee: fee, pct });
     modal(
       `✓ ${dir.name} — SIGNED`,
       `<div style="font-size:15px;color:var(--gold);margin-bottom:8px;">"${result.message}"</div>
-       <div style="font-size:13px;color:var(--muted);">Deal: <strong>$${fee}M</strong> flat + <strong>${pct}%</strong> box office · signed with <strong style="color:${team.color}">${team.name}</strong></div>`,
-      [{label:'Excellent →', gold:true, action:() => {
-        const card = document.getElementById(`dir-card-${idx}`);
-        if(card) card.replaceWith(buildDirCard(dir, idx));
-        renderDirProgress();
-        renderHeader();
-        if(team.directors.length >= 2) advanceDirTurn();
-        else renderDirTurnBanner();
-        checkAllDirectorsDone();
+       <div style="font-size:13px;color:var(--muted);">Deal: <strong>$${fee}M</strong> flat + <strong>${pct}%</strong> back-end · signed with <strong style="color:${team.color}">${team.name}</strong></div>`,
+      [{ label: 'Next team →', gold: true, action: () => {
+        refreshDirCard(idx);
+        advanceDirTurn();
       }}]
     );
+
   } else if(result.verdict === 'counter') {
+    // Show counter — team can Accept or Pass (either way, turn moves after)
     modal(
       `↩ ${dir.name} — COUNTER OFFER`,
       `<div style="font-size:15px;color:#D4874A;margin-bottom:8px;">"${result.message}"</div>
-       <div style="font-size:13px;color:var(--muted);">Counter: <strong>$${result.counterFee}M</strong> flat + <strong>${result.counterPct}%</strong> box office</div>
-       <div style="font-size:11px;color:var(--dim);margin-top:8px;">Accept their terms, or go back and make a new offer.</div>`,
+       <div style="font-size:13px;color:var(--muted);">Counter: <strong>$${result.counterFee}M</strong> flat + <strong>${result.counterPct}%</strong> back-end</div>
+       <div style="font-size:11px;color:#aaa;margin-top:8px;">Accept the counter or pass — either way the next team is up.</div>`,
       [
-        {label:'Pass', action:() => {
-          btn.disabled = false; btn.textContent = 'Offer';
-          advanceDirTurn();
+        { label: 'Pass', action: () => {
+            advanceDirTurn();
         }},
-        {label:`Accept $${result.counterFee}M + ${result.counterPct}%`, gold:true, action:() => {
-          if(team.budget < result.counterFee) { toast('Not enough budget for counter fee!'); return; }
-          dir.signedBy = G.dirTurn;
-          dir.dealFee = result.counterFee;
-          dir.dealPct = result.counterPct;
-          team.budget -= result.counterFee;
-          team.directors.push({dirIdx:idx, flatFee:result.counterFee, pct:result.counterPct});
-          const card = document.getElementById(`dir-card-${idx}`);
-          if(card) card.replaceWith(buildDirCard(dir, idx));
-          renderDirProgress();
-          renderHeader();
-          if(team.directors.length >= 2) advanceDirTurn();
-          else renderDirTurnBanner();
-          checkAllDirectorsDone();
+        { label: `Accept $${result.counterFee}M + ${result.counterPct}%`, gold: true, action: () => {
+            if(team.budget < result.counterFee) { toast('Not enough budget!'); return; }
+            dir.signedBy  = team.id;
+            dir.dealFee   = result.counterFee;
+            dir.dealPct   = result.counterPct;
+            team.budget  -= result.counterFee;
+            team.directors.push({ dirIdx: idx, flatFee: result.counterFee, pct: result.counterPct });
+            refreshDirCard(idx);
+            advanceDirTurn();
         }}
       ]
     );
+
   } else {
-    const reason = dir._rejectReason || 'Offer too low';
+    // Decline — turn moves on
     modal(
       `✗ ${dir.name} — DECLINED`,
       `<div style="font-size:15px;color:#C0392B;margin-bottom:8px;">"${result.message}"</div>
-       <div style="font-size:12px;color:var(--dim);">Reason: ${reason}</div>`,
-      [{label:'OK', action:() => {
-        btn.disabled = false; btn.textContent = 'Offer';
+       <div style="font-size:12px;color:#aaa;">Next team is up.</div>`,
+      [{ label: 'Next team →', gold: true, action: () => {
         advanceDirTurn();
       }}]
     );
   }
 }
 
-function evaluateDirectorOffer(dir, team, fee, pct) {
-  // moneyScore = fee + (pct * 1.5) — equity is valuable to directors
-  const moneyScore = fee + pct * 1.5;
-  const baseAsk    = dir.minFee + dir.minPct * 1.5;
-
-  // Each director has a personality: some are flexible, some are firm
-  // Personality is seeded per director so it's consistent within a session
-  const personality  = 0.88 + (dir.idx % 5) * 0.06; // 0.88–1.12× — deterministic per director
-  const effectiveAsk = baseAsk * personality;
-  const ratio        = moneyScore / effectiveAsk; // 1.0 = exactly their ask
-
-  // Accept: at or above ~80% of their effective ask
-  if(ratio >= 0.80) {
-    const lines = [
-      "Let's make something extraordinary.",
-      "You had me at the offer. Let's get to work.",
-      "Consider it done.",
-      "You've got yourself a deal.",
-      "I've been wanting to work with your studio. Done.",
-      "Works for me. Let's shoot.",
-    ];
-    return { verdict:'accept', message: lines[Math.floor(Math.random()*lines.length)] };
-  }
-
-  // Counter: between 50–80% of ask — clearly ask for more
-  if(ratio >= 0.50) {
-    // Target: exactly their effectiveAsk (no discounting in the counter)
-    // Figure out how much more is needed in total money-score terms
-    const needed = effectiveAsk - moneyScore;
-
-    // Director preference: randomly lean toward more fee OR more equity
-    const prefersEquity = (dir.stars >= 4) || Math.random() > 0.5;
-
-    let counterFee, counterPct;
-    if(prefersEquity && dir.minPct > 0) {
-      // Ask for more equity first, rest in fee
-      const extraPct = Math.min(49 - pct, Math.ceil(needed * 0.65 / 1.5));
-      const remainingNeeded = needed - extraPct * 1.5;
-      const extraFee = Math.max(0, Math.ceil(remainingNeeded));
-      counterFee = fee + extraFee;
-      counterPct = Math.min(49, pct + extraPct);
-    } else {
-      // Ask for more flat fee first
-      const extraFee = Math.ceil(needed * 0.65);
-      const remainingNeeded = needed - extraFee;
-      const extraPct = Math.max(0, Math.min(49 - pct, Math.ceil(remainingNeeded / 1.5)));
-      counterFee = fee + extraFee;
-      counterPct = pct + extraPct;
-    }
-
-    // Sanity: counter must always be strictly more than the offer
-    counterFee = Math.max(fee + 1, counterFee);
-    if(dir.minPct > 0) counterPct = Math.max(pct, counterPct);
-
-    const lines = [
-      "You're close. Here's what actually works for me.",
-      "I'm interested — but I need better terms.",
-      "Good faith offer. Here's my number.",
-      "Almost there. Meet me here and we have a deal.",
-      "I like the project. This is what it takes.",
-    ];
-    return { verdict:'counter', message: lines[Math.floor(Math.random()*lines.length)], counterFee, counterPct };
-  }
-
-  // Decline — too far below ask
-  dir._rejectReason = `Too far from what I'm looking for`;
-  const lines = [
-    "I appreciate the call, but the offer isn't there.",
-    "My agent's already on the phone with another studio.",
-    "Come back when the numbers make sense.",
-    "That's not a serious offer. Pass.",
-    "The project interests me — the deal doesn't.",
-  ];
-  return { verdict:'decline', message: lines[Math.floor(Math.random()*lines.length)] };
-}
-
-function rotateDirOfferTeam(idx) {
-  // Show next team on this director card
-  let next = (G.dirTurn + 1) % 4;
-  let loops = 0;
-  while(loops < 4) {
-    const t = G.teams[next];
-    if(t.directors.length < 2) break;
-    next = (next+1)%4;
-    loops++;
-  }
-  if(loops >= 4) {
-    // mark director passed
-    G.directorPool[idx].passed = true;
-    const card = document.getElementById(`dir-card-${idx}`);
-    card.replaceWith(buildDirCard(G.directorPool[idx], idx));
-  } else {
-    const statusEl = document.getElementById(`dir-status-${idx}`);
-    if(statusEl) {
-      statusEl.textContent = `Next offer: ${G.teams[next].name}`;
-      statusEl.className = 'dir-status pending';
-    }
-  }
+function refreshDirCard(idx) {
+  const old = document.getElementById(`dir-card-${idx}`);
+  if(old) old.replaceWith(buildDirCard(G.directorPool[idx], idx));
+  renderDirProgress();
+  renderHeader();
 }
 
 function advanceDirTurn() {
+  // Move to the next team that still needs directors
+  // If all teams are full, check for done
   let next = (G.dirTurn + 1) % 4;
   let loops = 0;
   while(loops < 4) {
     if(G.teams[next].directors.length < 2) break;
-    next = (next+1)%4;
+    next = (next + 1) % 4;
     loops++;
   }
-  if(loops < 4) {
-    G.dirTurn = next;
-    renderDirTurnBanner();
+  if(loops >= 4) {
+    // Everyone is full
+    checkAllDirectorsDone();
+    return;
   }
-  // Re-render all unsigned, unpassed director cards so offer row reflects new active team
-  G.directorPool.forEach((dir, idx) => {
-    if(!dir.signedBy && !dir.passed) {
-      const oldCard = document.getElementById(`dir-card-${idx}`);
-      if(oldCard) oldCard.replaceWith(buildDirCard(dir, idx));
+  G.dirTurn = next;
+  renderDirTurnBanner();
+  // Re-render every unsigned/unpassed card so the offer row shows the new active team
+  G.directorPool.forEach((d, i) => {
+    // Re-render only cards that are still available (not signed, not passed)
+    const isSigned = d.signedBy !== null && d.signedBy !== undefined;
+    if(!isSigned && !d.passed) {
+      const old = document.getElementById(`dir-card-${i}`);
+      if(old) old.replaceWith(buildDirCard(d, i));
     }
   });
   checkAllDirectorsDone();
@@ -1368,13 +1292,15 @@ function advanceDirTurn() {
 function checkAllDirectorsDone() {
   const allSigned = G.teams.every(t => t.directors.length >= 2);
   if(allSigned) {
-    setTimeout(()=>{
+    setTimeout(() => {
       modal('All Directors Signed!',
-        'Every studio has 2 directors. Time to assemble your films — each director can helm up to 2 of your 3 films.',
-        [{label:'Back', action:()=>{}},
-         {label:'Assemble Films →', gold:true, action:()=>{ showPhase('assemble'); renderAssemble(); }}]
+        'Every studio has 2 directors. Time to assemble your films.',
+        [
+          { label: 'Back', action: () => {} },
+          { label: 'Assemble Films →', gold: true, action: () => { showPhase('assemble'); renderAssemble(); } }
+        ]
       );
-    }, 600);
+    }, 500);
   }
 }
 
