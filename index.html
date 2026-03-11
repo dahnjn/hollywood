@@ -345,8 +345,8 @@ body{
   padding:7px 0;border-bottom:1px solid var(--ink4);
 }
 .mc-slot:last-of-type{border:none;margin-bottom:8px;}
-.mc-slot-icon{font-size:14px;width:20px;text-align:center;flex-shrink:0;}
-.mc-slot-type{font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--dim);width:40px;flex-shrink:0;}
+.mc-slot-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0;}
+.mc-slot-type{font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--dim);width:52px;flex-shrink:0;}
 .mc-slot-name{font-size:11px;color:var(--muted);flex:1;line-height:1.3;}
 .mc-slot-name.filled{color:var(--text2);}
 .mc-slot-name.empty{font-style:italic;color:var(--dim);}
@@ -1206,22 +1206,19 @@ function submitOffer(idx) {
 }
 
 function evaluateDirectorOffer(dir, team, fee, pct) {
-  // Purely money-based negotiation.
   // moneyScore = fee + (pct * 1.5) — equity is valuable to directors
-  // threshold is the director's "looking for" value, softened by jitter
-  // Directors are willing to accept somewhat below their ask; 
-  // 70–100% of ask = likely accept, 50–70% = counter, <50% = decline
-  const moneyScore    = fee + pct * 1.5;
-  const baseAsk       = dir.minFee + dir.minPct * 1.5;
-  // Add mild random personality — some directors are hungrier than others
-  const personality   = 0.85 + Math.random() * 0.30; // 0.85–1.15× their ask
-  const effectiveAsk  = baseAsk * personality;
-  const ratio         = moneyScore / effectiveAsk; // 1.0 = exactly their ask
-  const jitter        = (Math.random() - 0.5) * 0.08; // ±4%
+  const moneyScore = fee + pct * 1.5;
+  const baseAsk    = dir.minFee + dir.minPct * 1.5;
 
-  if(ratio + jitter >= 0.78) {
-    // Accept — anything roughly 78%+ of ask gets a yes
-    const acceptLines = [
+  // Each director has a personality: some are flexible, some are firm
+  // Personality is seeded per director so it's consistent within a session
+  const personality  = 0.88 + (dir.idx % 5) * 0.06; // 0.88–1.12× — deterministic per director
+  const effectiveAsk = baseAsk * personality;
+  const ratio        = moneyScore / effectiveAsk; // 1.0 = exactly their ask
+
+  // Accept: at or above ~80% of their effective ask
+  if(ratio >= 0.80) {
+    const lines = [
       "Let's make something extraordinary.",
       "You had me at the offer. Let's get to work.",
       "Consider it done.",
@@ -1229,39 +1226,59 @@ function evaluateDirectorOffer(dir, team, fee, pct) {
       "I've been wanting to work with your studio. Done.",
       "Works for me. Let's shoot.",
     ];
-    return { verdict:'accept', message: acceptLines[Math.floor(Math.random()*acceptLines.length)] };
+    return { verdict:'accept', message: lines[Math.floor(Math.random()*lines.length)] };
   }
 
-  if(ratio + jitter >= 0.50) {
-    // Counter — in the ballpark but not quite there
-    // Push toward ~90% of their ask
-    const target = effectiveAsk * 0.90;
-    const gap = target - moneyScore;
-    // Split the gap: some in fee, some in pct
-    const extraFee = Math.ceil(gap * 0.55 / 1.0);
-    const extraPct = Math.ceil((gap * 0.45) / 1.5);
-    const counterFee = Math.max(fee + 1, Math.ceil(fee + extraFee));
-    const counterPct = Math.min(49, Math.max(pct + 1, Math.ceil(pct + extraPct)));
-    const counterLines = [
-      "You're close. Here's what works for me.",
-      "I'm interested — meet me halfway.",
-      "Good faith offer. Let me come back with something.",
-      "Almost there. One adjustment and we're done.",
-      "I like the project. Let's find a number that works.",
+  // Counter: between 50–80% of ask — clearly ask for more
+  if(ratio >= 0.50) {
+    // Target: exactly their effectiveAsk (no discounting in the counter)
+    // Figure out how much more is needed in total money-score terms
+    const needed = effectiveAsk - moneyScore;
+
+    // Director preference: randomly lean toward more fee OR more equity
+    const prefersEquity = (dir.stars >= 4) || Math.random() > 0.5;
+
+    let counterFee, counterPct;
+    if(prefersEquity && dir.minPct > 0) {
+      // Ask for more equity first, rest in fee
+      const extraPct = Math.min(49 - pct, Math.ceil(needed * 0.65 / 1.5));
+      const remainingNeeded = needed - extraPct * 1.5;
+      const extraFee = Math.max(0, Math.ceil(remainingNeeded));
+      counterFee = fee + extraFee;
+      counterPct = Math.min(49, pct + extraPct);
+    } else {
+      // Ask for more flat fee first
+      const extraFee = Math.ceil(needed * 0.65);
+      const remainingNeeded = needed - extraFee;
+      const extraPct = Math.max(0, Math.min(49 - pct, Math.ceil(remainingNeeded / 1.5)));
+      counterFee = fee + extraFee;
+      counterPct = pct + extraPct;
+    }
+
+    // Sanity: counter must always be strictly more than the offer
+    counterFee = Math.max(fee + 1, counterFee);
+    if(dir.minPct > 0) counterPct = Math.max(pct, counterPct);
+
+    const lines = [
+      "You're close. Here's what actually works for me.",
+      "I'm interested — but I need better terms.",
+      "Good faith offer. Here's my number.",
+      "Almost there. Meet me here and we have a deal.",
+      "I like the project. This is what it takes.",
     ];
-    return { verdict:'counter', message: counterLines[Math.floor(Math.random()*counterLines.length)], counterFee, counterPct };
+    return { verdict:'counter', message: lines[Math.floor(Math.random()*lines.length)], counterFee, counterPct };
   }
 
   // Decline — too far below ask
-  dir._rejectReason = `Offer too far below expectations ($${dir.minFee}M + ${dir.minPct}% is the ballpark)`;
-  const declineLines = [
+  dir._rejectReason = `Too far from what I'm looking for`;
+  const lines = [
     "I appreciate the call, but the offer isn't there.",
     "My agent's already on the phone with another studio.",
     "Come back when the numbers make sense.",
     "That's not a serious offer. Pass.",
     "The project interests me — the deal doesn't.",
   ];
-  return { verdict:'decline', message: declineLines[Math.floor(Math.random()*declineLines.length)] };
+  return { verdict:'decline', message: lines[Math.floor(Math.random()*lines.length)] };
 }
 
 function rotateDirOfferTeam(idx) {
@@ -1496,7 +1513,7 @@ function buildMovieCard(team, film, fi) {
         <div class="harmony-bar">${harmonySegs}</div>
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:4px;">
           <div style="font-size:11px;color:#333;font-weight:600;">
-            ${harmonyScore.multiplier === '0' || harmonyScore.multiplier === 0 ? '—' : harmonyScore.multiplier + '×'} quality
+            ${!harmonyScore.multiplier || harmonyScore.multiplier === '0' || harmonyScore.multiplier === 0 ? '—' : parseFloat(harmonyScore.multiplier).toFixed(1) + '×'} quality
             ${film.budget ? `· +${Math.round(Math.min(0.50, film.budget/200)*100)}% marketing` : '· +0% marketing'}
           </div>
           <div style="font-size:10px;color:#888;">${harmonyScore.desc}</div>
@@ -1856,7 +1873,7 @@ function renderResults() {
         <div>
           <div class="wfr-label">Quality</div>
           <div style="display:flex;gap:3px;margin-top:3px;">${harmonyChips}</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px;">${f.hmult}× · avg ★${f.avgStars ? f.avgStars.toFixed(1) : "—"}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">${typeof f.hmult === "number" ? f.hmult.toFixed(1) : f.hmult}× · avg ★${f.avgStars ? f.avgStars.toFixed(1) : "—"}</div>
         </div>
         <div>
           <div class="wfr-label">Ad Budget</div>
