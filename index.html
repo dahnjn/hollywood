@@ -896,7 +896,7 @@ function renderShopTables() {
     // Section label
     const label = document.createElement('div');
     label.style.cssText = 'margin-bottom:14px;';
-    label.innerHTML = `<div style="font-family:'Bebas Neue',sans-serif;font-size:52px;letter-spacing:0.12em;color:#111;line-height:1;">${cat.icon} ${cat.label}</div><div style="font-size:12px;color:#777;letter-spacing:0.15em;margin-top:2px;">${cat.tiers.map(t=>'★'+t.stars+' $'+t.price+'M').join('  ·  ')}</div>`;
+    label.innerHTML = `<div style="font-family:'Bebas Neue',sans-serif;font-size:52px;letter-spacing:0.12em;color:#111;line-height:1;">${cat.icon} ${cat.label}</div>`;
     section.appendChild(label);
 
     const row = document.createElement('div');
