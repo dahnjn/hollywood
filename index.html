@@ -1909,7 +1909,18 @@ let RESULTS = {}; // computed results
 
 function computeResults() {
   RESULTS = {windows:{}, teams:{}};
-  G.teams.forEach(t => { RESULTS.teams[t.id] = {totalRevenue:0, totalBudget:0, totalProfit:0}; });
+  G.teams.forEach(t => {
+    // Sunk costs: what the team spent BEFORE any film revenue
+    const purchaseCost = teamSpend(t);                                          // cast+crew+scripts
+    const directorFees = t.directors.reduce((s,d) => s + (d.flatFee||0), 0);   // flat fees paid
+    const sunkCost = purchaseCost + directorFees;
+    RESULTS.teams[t.id] = {
+      totalRevenue: 0,
+      totalMarketing: 0,   // sum of per-film marketing budgets
+      sunkCost,            // roster + director flat fees (paid upfront)
+      totalProfit: 0,      // totalRevenue - directorCuts - totalMarketing - sunkCost
+    };
+  });
 
   RELEASE_WINDOWS.forEach(w => {
     // Gather all films in this window
@@ -1982,16 +1993,32 @@ function computeResults() {
       const dirDeal = f.team.directors.find(d=>d.dirIdx===f.film.director);
       const dirCut = dirDeal ? Math.round(f.revenue * dirDeal.pct / 100) : 0;
       const netRevenue = f.revenue - dirCut;
-      const profit = netRevenue - f.budget;
+      // Per-film profit = revenue after director % cut, minus this film's marketing spend
+      // Sunk costs (purchases + flat fees) are deducted at team level
+      const filmProfit = netRevenue - f.budget;
       f.dirCut = dirCut;
       f.netRevenue = netRevenue;
-      f.profit = profit;
-      RESULTS.teams[f.team.id].totalRevenue += f.revenue;
-      RESULTS.teams[f.team.id].totalBudget += f.budget;
-      RESULTS.teams[f.team.id].totalProfit += profit;
+      f.profit = filmProfit;
+      RESULTS.teams[f.team.id].totalRevenue   += f.revenue;
+      RESULTS.teams[f.team.id].totalMarketing += f.budget;
+      // totalProfit accumulated per-film; sunk cost deducted once at the end
     });
 
     RESULTS.windows[w.id] = {films, pool:w.pool};
+  });
+
+  // Final net profit = all revenue - all director % cuts - all marketing - sunk costs
+  G.teams.forEach(t => {
+    const tr = RESULTS.teams[t.id];
+    // Sum all director % cuts across all this team's films
+    let totalDirCuts = 0;
+    RELEASE_WINDOWS.forEach(w => {
+      const wr = RESULTS.windows[w.id];
+      if(wr) wr.films.forEach(f => { if(f.team.id === t.id) totalDirCuts += (f.dirCut||0); });
+    });
+    tr.totalDirCuts  = totalDirCuts;
+    tr.totalSpend    = tr.sunkCost + tr.totalMarketing;   // everything spent
+    tr.totalProfit   = tr.totalRevenue - totalDirCuts - tr.totalMarketing - tr.sunkCost;
   });
 }
 
@@ -2334,7 +2361,8 @@ function finishReveal() {
         <div class="lb-rank ${rankClass[i]}">${i+1}</div>
         <div>
           <div class="lb-name" style="color:${item.team.color}">${item.team.name}</div>
-          <div style="font-size:10px;color:var(--dim);">Rev $${item.totalRevenue}M · Spend $${item.totalBudget}M</div>
+          <div style="font-size:10px;color:var(--dim);">Box office: $${item.totalRevenue}M</div>
+          <div style="font-size:10px;color:var(--dim);">Roster+dirs: $${item.sunkCost}M · Mktg: $${item.totalMarketing}M</div>
         </div>
         <div class="lb-profit ${item.totalProfit<0?'neg':''}">
           ${item.totalProfit>=0?'+':''}$${item.totalProfit}M
