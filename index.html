@@ -43,57 +43,52 @@ body{
 /* ── TITLE SCREEN ── */
 #screen-title{
   align-items:center;justify-content:center;
-  background:linear-gradient(160deg, #0a1628 0%, #1558A0 60%, #0a1628 100%);
+  background:#000;
   position:relative;overflow:hidden;
 }
-#screen-title::before{
-  content:'';position:absolute;inset:0;
-  background:none;
+/* Animated canvas sits full-bleed behind everything */
+#title-canvas{
+  position:absolute;inset:0;width:100%;height:100%;z-index:0;
 }
-.title-content{text-align:center;position:relative;z-index:1;}
-.title-eyebrow{
-  font-family:'Barlow',sans-serif;font-weight:500;
-  font-size:11px;letter-spacing:0.5em;text-transform:uppercase;
-  color:var(--gold);opacity:0.7;margin-bottom:24px;
+.title-content{
+  text-align:center;position:relative;z-index:2;
+  display:flex;flex-direction:column;align-items:center;
 }
 .title-main{
   font-family:'Bebas Neue',sans-serif;
-  font-size:clamp(80px,15vw,160px);
-  letter-spacing:0.08em;
-  color:var(--text);
+  font-size:clamp(100px,18vw,200px);
+  letter-spacing:0.06em;
+  color:#fff;
   line-height:0.85;
-  text-shadow:0 0 80px rgba(200,169,81,0.15);
+  text-shadow:0 0 120px rgba(200,169,81,0.5), 0 0 40px rgba(200,169,81,0.3);
+  animation:titlePulse 4s ease-in-out infinite;
 }
 .title-main span{color:var(--gold);}
-.title-sub{
-  font-family:'Playfair Display',serif;font-style:italic;
-  font-size:16px;color:var(--muted);
-  margin:20px 0 48px;letter-spacing:0.05em;
+@keyframes titlePulse{
+  0%,100%{text-shadow:0 0 120px rgba(200,169,81,0.5),0 0 40px rgba(200,169,81,0.3);}
+  50%{text-shadow:0 0 180px rgba(200,169,81,0.8),0 0 60px rgba(200,169,81,0.5),0 2px 0 rgba(200,169,81,0.2);}
 }
-.title-team-setup{
-  background:#FFFFFF;border:1px solid var(--ink5);box-shadow:0 4px 24px rgba(0,0,0,0.10);
-  border-radius:8px;padding:32px 40px;
-  display:inline-block;text-align:left;min-width:400px;
-}
-.setup-label{font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;}
-.team-name-inputs{display:flex;flex-direction:column;gap:10px;margin-bottom:24px;}
-.team-name-row{display:flex;align-items:center;gap:12px;}
-.team-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-.team-input{
-  background:#FFFFFF;border:2px solid var(--ink5);border-radius:4px;
-  color:var(--text);font-family:'Barlow',sans-serif;font-weight:500;
-  font-size:14px;padding:9px 14px;flex:1;outline:none;
-  transition:border-color .2s;
-}
-.team-input:focus{border-color:var(--accent);}
 .btn-start{
-  width:100%;background:var(--gold);border:none;
-  color:var(--ink);font-family:'Barlow',sans-serif;
-  font-weight:600;font-size:12px;letter-spacing:0.25em;
-  text-transform:uppercase;padding:14px;border-radius:3px;
-  cursor:pointer;transition:all .2s;
+  margin-top:56px;
+  background:transparent;
+  border:2px solid var(--gold);
+  color:var(--gold);
+  font-family:'Bebas Neue',sans-serif;
+  font-size:22px;letter-spacing:0.35em;
+  padding:18px 64px;
+  border-radius:2px;
+  cursor:pointer;
+  transition:all 0.25s;
+  position:relative;overflow:hidden;
 }
-.btn-start:hover{background:var(--gold2);}
+.btn-start::before{
+  content:'';position:absolute;inset:0;
+  background:var(--gold);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform 0.25s ease;z-index:-1;
+}
+.btn-start:hover{color:#000;}
+.btn-start:hover::before{transform:scaleX(1);}
 
 /* ── GAME HEADER ── */
 .game-header{
@@ -539,32 +534,10 @@ input[type=number] { -moz-appearance:textfield; }
      TITLE SCREEN
 ══════════════════════════════════ -->
 <div id="screen-title" class="screen active">
+  <canvas id="title-canvas"></canvas>
   <div class="title-content">
-    <div class="title-eyebrow">A Science Fiction Film Studio Game</div>
     <div class="title-main">HOLLY<span>WOOD</span></div>
-    <div class="title-sub">Four studios. One box office. May the best vision win.</div>
-    <div class="title-team-setup">
-      <div class="setup-label">Name Your Studios</div>
-      <div class="team-name-inputs">
-        <div class="team-name-row">
-          <div class="team-dot" style="background:#D4574A;"></div>
-          <input class="team-input" id="t1" value="" maxlength="20">
-        </div>
-        <div class="team-name-row">
-          <div class="team-dot" style="background:#D4874A;"></div>
-          <input class="team-input" id="t2" value="" maxlength="20">
-        </div>
-        <div class="team-name-row">
-          <div class="team-dot" style="background:#4A9D7A;"></div>
-          <input class="team-input" id="t3" value="" maxlength="20">
-        </div>
-        <div class="team-name-row">
-          <div class="team-dot" style="background:#4A7AD4;"></div>
-          <input class="team-input" id="t4" value="" maxlength="20">
-        </div>
-      </div>
-      <button class="btn-start" onclick="startGame()">Open the Studio Gates</button>
-    </div>
+    <button class="btn-start" onclick="startGame()">START</button>
   </div>
 </div>
 
@@ -585,26 +558,32 @@ input[type=number] { -moz-appearance:textfield; }
   <!-- DRAFT PHASE -->
   <div id="phase-draft" class="phase-wrap" style="display:none;">
     <div class="phase-header">
-      <div class="phase-num">Phase Two</div>
       <div class="phase-title">ASSEMBLE TEAM</div>
-      <div class="phase-desc">Each team independently purchases 3 Scripts, 3 Cast, and 3 Crew. Choose any mix of star tiers. Higher stars cost more but impress directors and boost film quality. Advertising budget carries over to production.</div>
     </div>
 
-    <div id="shop-tables"></div>
+    <!-- Turn banner -->
+    <div class="whose-turn-banner" id="draft-turn-banner">
+      <div class="wtb-label">Picking</div>
+      <div class="wtb-team" id="draft-turn-name">—</div>
+      <div class="wtb-count" id="draft-turn-count">0 / 9 slots filled</div>
+    </div>
+
+    <!-- Market: available pieces to buy -->
+    <div id="draft-market" style="margin-bottom:24px;"></div>
+
+    <!-- All teams' current rosters -->
+    <div id="draft-rosters" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;"></div>
 
     <div class="mt16 flex-row" style="gap:12px;flex-wrap:wrap;">
-      <button class="btn btn-gold" onclick="finishDraft()">Done Shopping → Sign Directors</button>
-      <button class="btn" onclick="autoAssignDraft()" style="border-color:var(--dim);color:var(--soft);">⚡ Auto-Fill All Teams</button>
-      <div style="font-size:11px;color:var(--muted);" id="shop-status"></div>
+      <button class="btn btn-gold" id="finish-draft-btn" onclick="finishDraft()" style="display:none;">Done → Sign Directors</button>
+      <button class="btn" onclick="autoAssignDraft()" style="border-color:var(--dim);color:var(--soft);">⚡ Auto-Draft All Teams</button>
     </div>
   </div>
 
   <!-- DIRECTOR PHASE -->
   <div id="phase-directors" class="phase-wrap" style="display:none;">
     <div class="phase-header">
-      <div class="phase-num">Phase Three</div>
       <div class="phase-title">SIGN DIRECTORS</div>
-      <div class="phase-desc">Each team takes a turn making one offer to any available director. Directors may accept, counter, or decline. Accept or pass on counters — either way the next team is up. Each team signs 2 directors.</div>
     </div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
       <button class="btn btn-gold" onclick="autoSignAllDirectors()" style="font-size:11px;letter-spacing:0.15em;">⚡ Auto-Sign All Directors</button>
@@ -615,7 +594,7 @@ input[type=number] { -moz-appearance:textfield; }
     <div class="whose-turn-banner" id="dir-turn-banner">
       <div class="wtb-label">Making an offer</div>
       <div class="wtb-team" id="dir-turn-name">—</div>
-      <div class="wtb-count" id="dir-turn-count">0 / 2 signed</div>
+      <div class="wtb-count" id="dir-turn-count">0 / 3 signed</div>
     </div>
 
     <!-- Two-column layout: director roster (left) + active offer panel (right) -->
@@ -633,9 +612,7 @@ input[type=number] { -moz-appearance:textfield; }
   <!-- ASSEMBLE PHASE -->
   <div id="phase-assemble" class="phase-wrap" style="display:none;">
     <div class="phase-header">
-      <div class="phase-num">Phase Four</div>
       <div class="phase-title">ASSEMBLE MOVIES</div>
-      <div class="phase-desc">Assign your Director, Script, Cast, and Crew to each of 3 films. Set a Marketing budget and choose a release window. <strong>Quality dominates</strong> — a great film with no marketing beats a poor film with massive spend. Marketing provides a boost (up to +50%) that breaks ties and separates close competitors.</div>
     </div>
     <div class="release-strip" id="release-strip"></div>
 
@@ -651,9 +628,8 @@ input[type=number] { -moz-appearance:textfield; }
   <!-- RESULTS PHASE -->
   <div id="phase-results" class="phase-wrap" style="display:none;">
     <div class="phase-header">
-      <div class="phase-num">Phase Five</div>
       <div class="phase-title">BOX OFFICE RESULTS</div>
-      <div class="phase-desc">Revenue is split by release window. Films compete on <strong>Score = Quality× × (1 + Marketing Boost)</strong>. Films share the pool proportionally by score — watch the dollars flow.</div>
+
     </div>
 
     <!-- Animated reveal area -->
@@ -679,16 +655,9 @@ input[type=number] { -moz-appearance:textfield; }
 
     <div class="results-layout">
       <div class="results-main" id="results-windows" style="display:none;"></div>
-      <div class="results-sidebar">
-        <div class="leaderboard" id="leaderboard"></div>
-        <div class="multiplier-ref">
-          <div class="mr-title">Quality Multipliers</div>
-          <div class="mr-row"><div class="mr-label">Elite avg ★5.0</div><div class="mr-val">3.0×</div></div>
-          <div class="mr-row"><div class="mr-label">Strong avg ★4.0</div><div class="mr-val">2.0×</div></div>
-          <div class="mr-row"><div class="mr-label">Solid avg ★3.0</div><div class="mr-val">1.4×</div></div>
-          <div class="mr-row"><div class="mr-label">Modest avg ★2.0</div><div class="mr-val">0.8×</div></div>
-          <div class="mr-row"><div class="mr-label">Weak avg ★1.0</div><div class="mr-val">0.4×</div></div>
-        </div>
+      <div class="results-sidebar" id="results-sidebar" style="display:none;">
+        <div class="leaderboard" id="leaderboard" style="display:none;"></div>
+
       </div>
     </div>
   </div>
@@ -715,26 +684,35 @@ const COLOR_HEX = {red:'#C0392B',orange:'#D4681A',yellow:'#C8A20A',green:'#1E844
 const COLOR_LABEL = {red:'R',orange:'O',yellow:'Y',green:'G',blue:'B',purple:'P',grey:'★',black:'✕'};
 // ── STAR TIER SYSTEM ──
 const CAST_TIERS  = [
-  {stars:1, price:10,  label:'Unknowns'},
-  {stars:2, price:15,  label:'Rising Talent'},
-  {stars:3, price:25,  label:'Established Names'},
-  {stars:4, price:35,  label:'A-List Ensemble'},
-  {stars:5, price:50,  label:'Marquee Stars'},
+  {stars:1, price:8,   label:'Unknowns'},
+  {stars:2, price:12,  label:'Rising Talent'},
+  {stars:3, price:30,  label:'Established Names'},
+  {stars:4, price:55,  label:'A-List Ensemble'},
+  {stars:5, price:90,  label:'Marquee Stars'},
 ];
 const CREW_TIERS  = [
-  {stars:1, price:5,   label:'Entry Crew'},
-  {stars:2, price:7,   label:'Journeymen'},
-  {stars:3, price:9,   label:'Skilled Crew'},
-  {stars:4, price:11,  label:'Elite Crew'},
-  {stars:5, price:15,  label:'Award-Winning Crew'},
+  {stars:1, price:4,   label:'Entry Crew'},
+  {stars:2, price:6,   label:'Journeymen'},
+  {stars:3, price:18,  label:'Skilled Crew'},
+  {stars:4, price:35,  label:'Elite Crew'},
+  {stars:5, price:60,  label:'Award-Winning Crew'},
 ];
 const SCRIPT_TIERS = [
   {stars:1, price:1,   label:'Spec Script'},
-  {stars:2, price:3,   label:'Polished Draft'},
-  {stars:3, price:5,   label:'Proven Writer'},
-  {stars:4, price:7,   label:'WGA Award Finalist'},
-  {stars:5, price:10,  label:'Acclaimed Original'},
+  {stars:2, price:2,   label:'Polished Draft'},
+  {stars:3, price:8,   label:'Proven Writer'},
+  {stars:4, price:18,  label:'WGA Award Finalist'},
+  {stars:5, price:30,  label:'Acclaimed Original'},
 ];
+// Supply pool: 3 of each tier per category, shared across all teams
+const SUPPLY_PER_TIER = 3;
+function initSupply() {
+  return {
+    cast:    Array.from({length:5}, (_,i) => ({stars:i+1, remaining:SUPPLY_PER_TIER})),
+    crew:    Array.from({length:5}, (_,i) => ({stars:i+1, remaining:SUPPLY_PER_TIER})),
+    scripts: Array.from({length:5}, (_,i) => ({stars:i+1, remaining:SUPPLY_PER_TIER})),
+  };
+}
 function starStr(n) { return '★'.repeat(n) + '☆'.repeat(5-n); }
 function teamAvgStars(team) {
   const all = [...team.purchases.cast, ...team.purchases.crew, ...team.purchases.scripts];
@@ -745,9 +723,10 @@ function teamAvgStars(team) {
 }
 
 const RELEASE_WINDOWS = [
-  {id:'summer', name:'Summer', pool:400},
-  {id:'fall',   name:'Fall',   pool:600},
-  {id:'winter', name:'Winter', pool:1000},
+  {id:'spring',  name:'Spring',  pool:200},
+  {id:'summer',  name:'Summer',  pool:400},
+  {id:'fall',    name:'Fall',    pool:600},
+  {id:'holiday', name:'Holiday', pool:800},
 ];
 
 const HARMONY_MULTIPLIER = {4:3.0, 3:2.0, 2:1.4, 1:0.8, 0:0.4};
@@ -757,9 +736,9 @@ const HARMONY_MULTIPLIER = {4:3.0, 3:2.0, 2:1.4, 1:0.8, 0:0.4};
 const DIRECTOR_POOL = [
   // ★★★★★ — Elite directors: demanding, care deeply about everything — high bars all around
   {name:"Daria Morel",    style:"Epic space opera, sweeping franchise DNA",  photo:"dir-04.jpg", minFee:24, minPct:10, stars:5, prefs:{cast:5, crew:4, script:4}},
-  {name:"Lena Zhao",      style:"Wuxia-influenced, poetic action",           photo:"dir-06.jpg", minFee:22, minPct:9,  stars:5, prefs:{cast:4, crew:5, script:3}},
-  {name:"Marcus Lund",    style:"Cerebral sci-fi, intricate world-building", photo:"dir-02.jpg", minFee:20, minPct:8,  stars:5, prefs:{cast:3, crew:4, script:5}},
   {name:"Yael Okonjo",    style:"Afrofuturist spectacle, vibrant palette",   photo:"dir-09.jpg", minFee:21, minPct:0,  stars:5, prefs:{cast:5, crew:5, script:3}},
+  {name:"Lena Zhao",      style:"Debut feature, raw wuxia-influenced vision",photo:"dir-06.jpg", minFee:1,  minPct:1,  stars:1, prefs:{cast:2, crew:2, script:3}},
+  {name:"Marcus Lund",    style:"First-timer, obsessive world-building style",photo:"dir-02.jpg", minFee:1,  minPct:1,  stars:1, prefs:{cast:2, crew:3, script:4}},
   // ★★★★ — Established directors: strong standards, one clear specialty
   {name:"Vera Okafor",    style:"Visceral action, practical effects",        photo:"dir-01.jpg", minFee:14, minPct:6,  stars:4, prefs:{cast:5, crew:4, script:2}},
   {name:"Petra Hamm",     style:"Psychological sci-fi, unreliable reality",  photo:"dir-07.jpg", minFee:12, minPct:5,  stars:4, prefs:{cast:2, crew:3, script:5}},
@@ -786,8 +765,6 @@ function genScifiTitle() {
 }
 
 const TEAM_COLORS_CSS = ['#D4574A','#D4874A','#4A9D7A','#4A7AD4','#C8A20A','#9B59B6'];
-const STARTING_BUDGET = 500; // $M
-
 let G = {}; // game state
 
 function initState(names) {
@@ -796,7 +773,6 @@ function initState(names) {
       id: i,
       name: n,
       color: TEAM_COLORS_CSS[i],
-      budget: STARTING_BUDGET,
       purchases: {
         scripts: Array.from({length:5}, (_,i) => ({stars:i+1, qty:0, tier:SCRIPT_TIERS[i]})),
         cast:    Array.from({length:5}, (_,i) => ({stars:i+1, qty:0, tier:CAST_TIERS[i]})),
@@ -816,7 +792,9 @@ function initState(names) {
     })),
     directorPool: DIRECTOR_POOL.map((d,i) => ({...d, idx:i, signedBy:null, passed:false, currentBidder:0})),
     phase: 'draft',
-    draftTurn: 0,            // team index
+    draftTurn: 0,            // team index whose turn it is to purchase
+    draftDone: false,        // true when all teams have 9 pieces
+    supply: initSupply(),    // shared supply pool
     dirTurn: 0,
     selectedDir: null,
     currentDirIdx: 0,
@@ -830,7 +808,7 @@ function initState(names) {
 //  NAVIGATION & UTILS
 // ════════════════════════════════════════════════════════
 function startGame() {
-  const names = ['t1','t2','t3','t4'].map(id => document.getElementById(id).value.trim() || `Team ${id.slice(1)}`);
+  const names = ['Team 1', 'Team 2', 'Team 3', 'Team 4'];
   initState(names);
   document.getElementById('screen-title').classList.remove('active');
   document.getElementById('screen-game').classList.add('active');
@@ -883,12 +861,15 @@ function modal(title, body, buttons) {
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 
 // ════════════════════════════════════════════════════════
-//  PHASE 2: SHOPPING
+//  PHASE 2: DRAFT — TURN-BASED TALENT MARKET
 // ════════════════════════════════════════════════════════
-function renderDraft() {
-  renderShopTables();
-  renderShopStatus();
-  renderHeader();
+
+function teamSlotCount(team, type) {
+  return team.purchases[type].reduce((s,p) => s + p.qty, 0);
+}
+
+function teamTotalSlots(team) {
+  return teamSlotCount(team,'cast') + teamSlotCount(team,'crew') + teamSlotCount(team,'scripts');
 }
 
 function teamSpend(team) {
@@ -900,9 +881,30 @@ function teamSpend(team) {
   return total;
 }
 
-function renderShopTables() {
-  const container = document.getElementById('shop-tables');
-  container.innerHTML = '';
+function renderDraft() {
+  renderDraftTurnBanner();
+  renderDraftMarket();
+  renderDraftRosters();
+  renderHeader();
+  // Show finish button only when all teams are done
+  const allDone = G.teams.every(t => teamTotalSlots(t) >= 9);
+  const btn = document.getElementById('finish-draft-btn');
+  if(btn) btn.style.display = allDone ? '' : 'none';
+}
+
+function renderDraftTurnBanner() {
+  const team = G.teams[G.draftTurn];
+  const el = document.getElementById('draft-turn-name');
+  const ct = document.getElementById('draft-turn-count');
+  if(el) { el.textContent = team.name; el.style.color = team.color; }
+  if(ct) ct.textContent = `${teamTotalSlots(team)} / 9 slots filled`;
+}
+
+function renderDraftMarket() {
+  const market = document.getElementById('draft-market');
+  if(!market) return;
+  const team = G.teams[G.draftTurn];
+  const isDone = teamTotalSlots(team) >= 9;
 
   const cats = [
     {key:'cast',    label:'CAST',    icon:'🎭', tiers:CAST_TIERS},
@@ -910,186 +912,224 @@ function renderShopTables() {
     {key:'scripts', label:'SCRIPTS', icon:'📄', tiers:SCRIPT_TIERS},
   ];
 
-  // Section per category, 4 team cards per section
+  market.innerHTML = `<div style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#aaa;margin-bottom:12px;">
+    ${isDone ? `<span style="color:#1E8449;font-weight:700;">✓ ${team.name} is fully stocked — waiting for other teams</span>` : `${team.name}'s pick — choose one slot to fill`}
+  </div>`;
+
   cats.forEach(cat => {
-    const section = document.createElement('div');
-    section.style.cssText = 'margin-bottom:20px;';
-
-    // Section label
-    const label = document.createElement('div');
-    label.style.cssText = 'margin-bottom:14px;';
-    label.innerHTML = `<div style="font-family:'Bebas Neue',sans-serif;font-size:52px;letter-spacing:0.12em;color:#111;line-height:1;">${cat.icon} ${cat.label}</div>`;
-    section.appendChild(label);
-
     const row = document.createElement('div');
-    row.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:12px;';
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:10px;';
 
-    G.teams.forEach(t => {
-      const card = document.createElement('div');
-      card.style.cssText = 'background:#FFFFFF;border:1px solid #DDDDDD;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);';
+    const catLabel = document.createElement('div');
+    catLabel.style.cssText = 'width:80px;flex-shrink:0;';
+    catLabel.innerHTML = `<div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:0.1em;color:#555;">${cat.icon} ${cat.label}</div>
+      <div style="font-size:10px;color:#aaa;">${teamSlotCount(team, cat.key)}/3 filled</div>`;
+    row.appendChild(catLabel);
 
-      const catTotal = t.purchases[cat.key].reduce((s,p)=>s+p.qty,0); // target: 3
-      const catSpend = t.purchases[cat.key].reduce((s,p,i)=>s+p.qty*cat.tiers[i].price,0);
-      const tcol = catTotal===3?'#1E8449':catTotal>3?'#C0392B':'var(--dim)';
+    const tiles = document.createElement('div');
+    tiles.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;';
 
-      let h = `
-        <div style="padding:8px 12px;border-bottom:2px solid ${t.color};display:flex;align-items:center;justify-content:space-between;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:0.08em;color:${t.color};">${t.name}</div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#B8860B;font-weight:700;" id="catspend-${cat.key}-${t.id}">$${catSpend}M</div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:17px;color:${tcol};" id="total-${cat.key}-${t.id}">${catTotal}<span style="font-size:10px;color:var(--dim);">/3</span></div>
-          </div>
-        </div>
-        <table style="width:100%;border-collapse:collapse;">
-          <thead><tr style="border-bottom:1px solid var(--ink5);">
-            ${cat.tiers.map(tier=>`
-              <th style="padding:5px 4px;text-align:center;font-weight:400;">
-                <div style="font-size:14px;color:#B8860B;font-weight:700;">★${tier.stars}</div>
-                <div style="font-size:10px;color:#555;font-weight:600;">$${tier.price}M</div>
-              </th>`).join('')}
-          </tr></thead>
-          <tbody><tr>
-            ${cat.tiers.map(tier => {
-              const p = t.purchases[cat.key][tier.stars-1];
-              return `<td style="padding:8px 4px;text-align:center;">
-                <input type="number" min="0" max="6" value="${p.qty}"
-                  id="qty-${cat.key}-${tier.stars}-${t.id}"
-                  oninput="setQty('${cat.key}',${tier.stars-1},${t.id},this)"
-                  style="width:38px;background:var(--ink4);border:1px solid var(--ink5);border-radius:3px;color:#111111;font-family:'Bebas Neue',sans-serif;font-size:18px;text-align:center;padding:4px 0;outline:none;border-color:#999 !important;">
-              </td>`;
-            }).join('')}
-          </tr></tbody>
-        </table>`;
+    cat.tiers.forEach((tier, i) => {
+      const supply = G.supply[cat.key][i];
+      const purchased = team.purchases[cat.key][i].qty;
+      const remaining = supply.remaining;
+      const catFull   = teamSlotCount(team, cat.key) >= 3;
+      const canAfford = true; // no budget limit
+      const available = remaining > 0 && !catFull && !isDone;
 
-      card.innerHTML = h;
-      row.appendChild(card);
+      const tile = document.createElement('div');
+      const stars = '★'.repeat(tier.stars);
+      tile.style.cssText = `width:80px;border:2px solid ${available ? '#1558A0' : '#e0e0e0'};border-radius:7px;padding:8px 6px;text-align:center;
+        background:${available ? '#fff' : '#f9f9f9'};cursor:${available ? 'pointer' : 'default'};
+        opacity:${remaining === 0 ? 0.4 : catFull || isDone ? 0.5 : 1};
+        transition:box-shadow 0.1s;position:relative;`;
+
+      if(available) {
+        tile.onmouseenter = () => tile.style.boxShadow = '0 2px 8px rgba(21,88,160,0.25)';
+        tile.onmouseleave = () => tile.style.boxShadow = '';
+        tile.onclick = () => draftPick(cat.key, i);
+      }
+
+      const soldOut = remaining === 0;
+      tile.innerHTML = `
+        <div style="font-size:13px;color:#B8860B;letter-spacing:0.05em;">${stars}</div>
+        <div style="font-size:9px;color:#777;margin:2px 0;">${tier.label}</div>
+        <div style="font-size:13px;font-weight:700;color:#111;">$${tier.price}M</div>
+        <div style="font-size:9px;color:${remaining<=1?'#C0392B':'#888'};margin-top:3px;">${soldOut ? 'SOLD OUT' : remaining + ' left'}</div>
+        ${purchased > 0 ? `<div style="position:absolute;top:-6px;right:-6px;background:${team.color};color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center;">${purchased}</div>` : ''}
+      `;
+      tiles.appendChild(tile);
     });
 
-    section.appendChild(row);
-    container.appendChild(section);
+    row.appendChild(tiles);
+    market.appendChild(row);
   });
-
-  // Summary bar: total spend + budget remaining per team
-  const summary = document.createElement('div');
-  summary.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:4px;';
-  G.teams.forEach(t => {
-    const spent = teamSpend(t);
-    const div = document.createElement('div');
-    div.id = `summary-${t.id}`;
-    div.style.cssText = `background:#FFFFFF;border:1px solid #DDDDDD;border-radius:6px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-top:3px solid ${t.color};box-shadow:0 1px 4px rgba(0,0,0,0.06);`;
-    div.innerHTML = `
-      <div>
-        <div style="font-size:9px;letter-spacing:0.18em;color:#888;margin-bottom:2px;font-weight:600;">TOTAL OUTLAY</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#B8860B;" id="outlay-${t.id}">$${spent}M</div>
-      </div>
-`;
-    summary.appendChild(div);
-  });
-  container.appendChild(summary);
 }
 
-function setQty(type, tierIdx, teamId, inputEl) {
-  const team = G.teams[teamId];
-  const p = team.purchases[type][tierIdx];
+function draftPick(type, tierIdx) {
+  const team = G.teams[G.draftTurn];
   const tiers = type==='cast'?CAST_TIERS:type==='crew'?CREW_TIERS:SCRIPT_TIERS;
   const tier = tiers[tierIdx];
-  const newQty = Math.max(0, parseInt(inputEl.value) || 0);
+  const supply = G.supply[type][tierIdx];
 
-  // Refund old qty, then cap new qty by budget + 6-limit
-  team.budget += p.qty * tier.price;
-  const othersTotal = team.purchases[type].reduce((s,x,i) => s + (i===tierIdx ? 0 : x.qty), 0);
-  const maxByLimit = Math.max(0, 3 - othersTotal);
-  const maxByBudget = Math.floor(team.budget / tier.price);
-  const capped = Math.min(newQty, maxByLimit, maxByBudget);
+  if(supply.remaining <= 0) { toast('Sold out!'); return; }
+  if(teamSlotCount(team, type) >= 3) { toast(`Already have 3 ${type}`); return; }
+  if(teamTotalSlots(team) >= 9) { toast('Already fully stocked'); return; }
 
-  p.qty = capped;
-  team.budget -= capped * tier.price;
-  inputEl.value = capped;
+  // Make the purchase
+  supply.remaining--;
+  team.purchases[type][tierIdx].qty++;
+  toast(`${team.name} picked ${tier.label} (★${tier.stars}) ${type} for $${tier.price}M`);
 
-  // Refresh cat total + cat spend header
-  const catTotal = team.purchases[type].reduce((s,x)=>s+x.qty,0);
-  const catSpend = team.purchases[type].reduce((s,x,i)=>s+x.qty*tiers[i].price,0);
-  const tcol = catTotal===3?'#1E8449':catTotal>3?'#C0392B':'var(--dim)';
-  const totalEl = document.getElementById(`total-${type}-${teamId}`);
-  if(totalEl) totalEl.innerHTML = `${catTotal}<span style="font-size:10px;color:var(--dim);">/3</span>`;
-  if(totalEl) totalEl.style.color = tcol;
-  const catSpendEl = document.getElementById(`catspend-${type}-${teamId}`);
-  if(catSpendEl) catSpendEl.textContent = `$${catSpend}M`;
-
-  // Refresh summary outlay + remaining
-  const spent = teamSpend(team);
-  const outlayEl = document.getElementById(`outlay-${teamId}`);
-  if(outlayEl) outlayEl.textContent = `$${spent}M`;
-
-
-  renderShopStatus();
-  renderHeader();
+  // Advance to next team that still needs picks
+  advanceDraftTurn();
 }
 
-function renderShopStatus() {
-  const problems = [];
-  G.teams.forEach(t => {
-    ['cast','crew','scripts'].forEach(type => {
-      const total = t.purchases[type].reduce((s,p)=>s+p.qty,0);
-      if(total !== 3) problems.push(`${t.name} needs 3 ${type} (has ${total})`);
-    });
-  });
-  const el = document.getElementById('shop-status');
-  if(!el) return;
-  el.textContent = problems.length === 0 ? '✓ All teams ready' : `${problems.length} issue${problems.length>1?'s':''} remaining`;
-  el.style.color = problems.length === 0 ? '#1E8449' : 'var(--muted)';
-}
-
-function passDraft() {} // no-op in shopping mode
-
-function autoAssignDraft() {
-  // Give each team a balanced mix — 2× 3-star as base, fill up/down based on budget
-  G.teams.forEach(team => {
-    ['cast','crew','scripts'].forEach(type => {
-      const tiers = type==='cast' ? CAST_TIERS : type==='crew' ? CREW_TIERS : SCRIPT_TIERS;
-      // Reset first (refund)
-      team.purchases[type].forEach((p,i) => {
-        team.budget += p.qty * tiers[i].price;
-        p.qty = 0;
-      });
-      // Buy 1× each of 3-star, 2-star, 1-star as default spread
-      const plan = [1,1,1,0,0]; // indices 0=1★ 1=2★ 2=3★ 3=4★ 4=5★
-      plan.forEach((qty, tierIdx) => {
-        const cost = qty * tiers[tierIdx].price;
-        if(team.budget >= cost) {
-          team.purchases[type][tierIdx].qty = qty;
-          team.budget -= cost;
-        }
-      });
-    });
-  });
+function advanceDraftTurn() {
+  const allDone = G.teams.every(t => teamTotalSlots(t) >= 9);
+  if(allDone) {
+    G.draftDone = true;
+    renderDraft();
+    setTimeout(() => {
+      modal('Teams Assembled!',
+        'All 4 studios have their talent. Time to negotiate with directors.',
+        [{label:'Back', action:()=>{}},
+         {label:'Sign Directors →', gold:true, action:()=>{ showPhase('directors'); renderDirectors(); }}]
+      );
+    }, 300);
+    return;
+  }
+  // Find next team that still needs picks
+  let next = (G.draftTurn + 1) % 4;
+  let loops = 0;
+  while(loops < 4) {
+    if(teamTotalSlots(G.teams[next]) < 9) break;
+    next = (next + 1) % 4;
+    loops++;
+  }
+  G.draftTurn = next;
   renderDraft();
-  toast('⚡ Auto-filled all teams with a balanced spread');
+}
+
+function renderDraftRosters() {
+  const container = document.getElementById('draft-rosters');
+  if(!container) return;
+  container.innerHTML = '';
+
+  G.teams.forEach(team => {
+    const card = document.createElement('div');
+    const done = teamTotalSlots(team) >= 9;
+    card.style.cssText = `background:#fff;border:2px solid ${G.draftTurn===team.id ? team.color : '#e0e0e0'};border-radius:8px;padding:12px;`;
+
+    const cats = [
+      {key:'cast', icon:'🎭', label:'Cast', tiers:CAST_TIERS},
+      {key:'crew', icon:'⚙️', label:'Crew', tiers:CREW_TIERS},
+      {key:'scripts', icon:'📄', label:'Script', tiers:SCRIPT_TIERS},
+    ];
+
+    const rosterRows = cats.map(cat => {
+      const items = team.purchases[cat.key]
+        .filter(p => p.qty > 0)
+        .flatMap(p => {
+          const tier = cat.tiers[p.stars-1];
+          const stars = '★'.repeat(p.stars);
+          return Array.from({length:p.qty}, () =>
+            `<span style="display:inline-block;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:3px;padding:1px 5px;font-size:10px;margin:1px;color:#B8860B;">${stars}</span>`
+          );
+        }).join('');
+      const count = teamSlotCount(team, cat.key);
+      return `<div style="display:flex;align-items:flex-start;gap:5px;margin-bottom:4px;">
+        <span style="font-size:9px;color:#aaa;width:38px;flex-shrink:0;padding-top:3px;text-transform:uppercase;letter-spacing:0.08em;">${cat.label}</span>
+        <div>${items || '<span style="font-size:10px;color:#ccc;">—</span>'}</div>
+        <span style="font-size:9px;color:${count>=3?'#1E8449':'#aaa'};margin-left:auto;">${count}/3</span>
+      </div>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:0.08em;color:${team.color};margin-bottom:2px;">${team.name} ${done?'✓':''}</div>
+      ${rosterRows}
+    `;
+    container.appendChild(card);
+  });
 }
 
 function finishDraft() {
-  const problems = [];
-  G.teams.forEach(t => {
-    ['cast','crew','scripts'].forEach(type => {
-      const total = t.purchases[type].reduce((s,p)=>s+p.qty,0);
-      if(total !== 3) problems.push(`${t.name}: ${total}/3 ${type}`);
-    });
-  });
-  if(problems.length > 0) {
-    modal('Shopping Incomplete', `Every team needs exactly 6 of each type:<br><br>${problems.map(p=>`• ${p}`).join('<br>')}`,
-      [{label:'Back', action:()=>{}}]);
+  const allDone = G.teams.every(t => teamTotalSlots(t) >= 9);
+  if(!allDone) {
+    const problems = G.teams.filter(t => teamTotalSlots(t) < 9).map(t => `${t.name}: ${teamTotalSlots(t)}/9 slots filled`);
+    modal('Not Ready', problems.join('<br>'), [{label:'Keep Drafting', action:()=>{}}]);
     return;
   }
-  modal('Proceed to Director Signing?',
-    'All teams have their cast, crew, and scripts. Now sign your directors.',
-    [{label:'Back', action:()=>{}},
+  modal('Sign Directors?', 'All teams are assembled. Move on to director negotiations?',
+    [{label:'Keep Editing', action:()=>{}},
      {label:'Sign Directors →', gold:true, action:()=>{ showPhase('directors'); renderDirectors(); }}]
   );
 }
 
-// ════════════════════════════════════════════════════════
-//  PHASE 3: DIRECTORS
-// ════════════════════════════════════════════════════════
+function autoAssignDraft() {
+  // Reset all purchases and supply
+  G.supply = initSupply();
+  G.teams.forEach(team => {
+    ['cast','crew','scripts'].forEach(type => {
+      const tiers = type==='cast'?CAST_TIERS:type==='crew'?CREW_TIERS:SCRIPT_TIERS;
+      team.purchases[type].forEach((p,i) => { p.qty = 0; });
+    });
+  });
+
+  // Round-robin: each team picks best available affordable option for their most-needed slot
+  let safety = 200;
+  while(safety-- > 0 && !G.teams.every(t => teamTotalSlots(t) >= 9)) {
+    const team = G.teams[G.draftTurn];
+    if(teamTotalSlots(team) >= 9) { advanceDraftTurnSilent(); continue; }
+
+    // Pick the most-needed category, then highest affordable tier
+    const cats = ['cast','crew','scripts'];
+    // Prefer whichever category is most empty
+    const needsCat = cats.filter(c => teamSlotCount(team,c) < 3)
+      .sort((a,b) => teamSlotCount(team,a) - teamSlotCount(team,b));
+
+    let picked = false;
+    for(const cat of needsCat) {
+      const tiers = cat==='cast'?CAST_TIERS:cat==='crew'?CREW_TIERS:SCRIPT_TIERS;
+      // Try from ★3 down to ★1 (balanced approach)
+      const preferred = [2,1,0,3,4]; // indices: ★3,★2,★1,★4,★5
+      for(const ti of preferred) {
+        const supply = G.supply[cat][ti];
+        const tier = tiers[ti];
+        if(supply.remaining > 0) {
+          supply.remaining--;
+          team.purchases[cat][ti].qty++;
+          picked = true;
+          break;
+        }
+      }
+      if(picked) break;
+    }
+    if(!picked) break; // can't afford anything
+    advanceDraftTurnSilent();
+  }
+
+  G.draftTurn = 0;
+  renderDraft();
+  toast('⚡ Auto-drafted — balanced ★3/★2/★1 spread for each team');
+}
+
+function advanceDraftTurnSilent() {
+  const allDone = G.teams.every(t => teamTotalSlots(t) >= 9);
+  if(allDone) { G.draftDone = true; return; }
+  let next = (G.draftTurn + 1) % 4;
+  let loops = 0;
+  while(loops < 4) {
+    if(teamTotalSlots(G.teams[next]) < 9) break;
+    next = (next+1)%4; loops++;
+  }
+  G.draftTurn = next;
+}
+
+function renderShopStatus() {} // kept for compat
+function setQty() {}           // kept for compat
+function passDraft() {}        // kept for compat
+
 // ════════════════════════════════════════════════════════
 //  PHASE 3: DIRECTOR SIGNING
 //
@@ -1117,7 +1157,7 @@ function renderDirProgress() {
   if(!bar) return;
   bar.innerHTML = G.teams.map(t => {
     const count = t.directors.length;
-    const pips = Array.from({length:2}, (_,i) =>
+    const pips = Array.from({length:3}, (_,i) =>
       `<div class="dpt-pip${i<count?' filled':''}"></div>`).join('');
     return `<div class="dir-prog-team">
       <div class="dpt-name" style="color:${t.color}">${t.name}</div>
@@ -1132,7 +1172,7 @@ function renderDirTurnBanner() {
   const el = document.getElementById('dir-turn-name');
   const ct = document.getElementById('dir-turn-count');
   if(el) { el.textContent = team.name; el.style.color = team.color; }
-  if(ct) ct.textContent = `${team.directors.length} / 2 signed`;
+  if(ct) ct.textContent = `${team.directors.length} / 3 signed`;
 }
 
 // ── Roster: all 12 directors, compact cards ──────────────
@@ -1142,8 +1182,8 @@ function renderDirRoster() {
   if(!roster) return;
   roster.innerHTML = '';
 
-  // Group: available → signed → passed
-  const dirs = G.directorPool.map((d,i) => ({...d, _i:i}));
+  // Group: available → signed → passed, each sorted ★5→★1
+  const dirs = G.directorPool.map((d,i) => ({...d, _i:i})).sort((a,b) => b.stars - a.stars);
   const available = dirs.filter(d => !isSigned(d) && !d.passed);
   const signed    = dirs.filter(d => isSigned(d));
   const passed    = dirs.filter(d => !isSigned(d) && d.passed);
@@ -1173,7 +1213,7 @@ function buildRosterCard(idx, dimmed) {
   const activeTeam = G.teams[G.dirTurn];
   const isSelected = G.selectedDir === idx;
   const isClickable = !signed && !passed && !dimmed;
-  const alreadyFull = activeTeam.directors.length >= 2;
+  const alreadyFull = activeTeam.directors.length >= 3;
 
   const div = document.createElement('div');
   div.id = `roster-card-${idx}`;
@@ -1189,19 +1229,7 @@ function buildRosterCard(idx, dimmed) {
   const photoSrc = `photos/${dir.photo}`;
   const dirStars = '★'.repeat(dir.stars) + '<span style="color:#ddd;">★</span>'.repeat(5-dir.stars);
 
-  // Preference bars
-  const prefHtml = dir.prefs ? ['cast','crew','script'].map(k => {
-    const colors = {cast:'#1558A0', crew:'#B8860B', script:'#1A7A3A'};
-    const labels = {cast:'Cast', crew:'Crew', script:'Script'};
-    const filled = dir.prefs[k]; // already 1–5
-    const pips = Array.from({length:5}, (_,i) =>
-      `<div style="width:8px;height:5px;border-radius:1px;background:${i<filled ? colors[k] : '#e8e8e8'};"></div>`
-    ).join('');
-    return `<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
-      <span style="font-size:8px;color:#aaa;width:30px;">${labels[k]}</span>
-      <div style="display:flex;gap:2px;">${pips}</div>
-    </div>`;
-  }).join('') : '';
+  const prefHtml = ''; // removed — not shown to players
 
   let statusHtml = '';
   if(signed) {
@@ -1219,11 +1247,10 @@ function buildRosterCard(idx, dimmed) {
       onerror="this.style.display='none'">
     <div style="flex:1;min-width:0;">
       <div style="font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:0.05em;color:#111;">${dir.name}</div>
-      <div style="font-size:11px;color:#888;margin:1px 0 4px;">${dir.style}</div>
       <div style="font-size:13px;color:var(--gold);">${dirStars}</div>
       ${statusHtml}
     </div>
-    <div style="flex-shrink:0;">${prefHtml}</div>
+
   `;
   return div;
 }
@@ -1290,12 +1317,10 @@ function renderOfferPanel() {
     <div style="background:#fff;border:2px solid #1558A0;border-radius:10px;overflow:hidden;">
       <div style="background:#1558A0;padding:12px 16px;">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#fff;letter-spacing:0.05em;">${dir.name}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px;">${dir.style}</div>
       </div>
       <div style="padding:16px;">
         <div style="font-size:11px;color:#aaa;margin-bottom:4px;">Offering studio</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:${activeTeam.color};letter-spacing:0.05em;margin-bottom:2px;">${activeTeam.name}</div>
-        <div style="font-size:11px;color:#aaa;margin-bottom:12px;">Budget remaining: <strong>$${activeTeam.budget}M</strong></div>
 
         <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:#aaa;margin-bottom:6px;">${activeTeam.name}'s roster</div>
         ${rosterRows}
@@ -1338,8 +1363,7 @@ function submitOffer(idx) {
 
   if(fee <= 0 && pct <= 0)      { toast('Enter a fee and/or percentage'); return; }
   if(pct >= 100)                 { toast('Cannot offer 100%+ equity'); return; }
-  if(team.budget < fee)          { toast('Not enough budget for that fee'); return; }
-  if(team.directors.length >= 2) { toast('Already have 2 directors'); return; }
+  if(team.directors.length >= 3) { toast('Already have 3 directors'); return; }
   if(isSigned(dir))              { toast('That director is already signed'); return; }
 
   if(btn) { btn.disabled = true; btn.textContent = 'Waiting...'; }
@@ -1348,7 +1372,6 @@ function submitOffer(idx) {
 
   if(result.verdict === 'accept') {
     dir.signedBy = team.id; dir.dealFee = fee; dir.dealPct = pct;
-    team.budget -= fee;
     team.directors.push({dirIdx:idx, flatFee:fee, pct});
     modal(
       `✓ ${dir.name} — SIGNED`,
@@ -1366,9 +1389,7 @@ function submitOffer(idx) {
       [
         {label:'Pass', action:() => { G.selectedDir = null; doAdvanceTurn(); }},
         {label:`Accept $${result.counterFee}M + ${result.counterPct}%`, gold:true, action:() => {
-          if(team.budget < result.counterFee) { toast('Not enough budget'); return; }
           dir.signedBy = team.id; dir.dealFee = result.counterFee; dir.dealPct = result.counterPct;
-          team.budget -= result.counterFee;
           team.directors.push({dirIdx:idx, flatFee:result.counterFee, pct:result.counterPct});
           G.selectedDir = null;
           doAdvanceTurn();
@@ -1391,17 +1412,17 @@ function doAdvanceTurn() {
   let next = (G.dirTurn + 1) % 4;
   let loops = 0;
   while(loops < 4) {
-    if(G.teams[next].directors.length < 2) break;
+    if(G.teams[next].directors.length < 3) break;
     next = (next+1) % 4;
     loops++;
   }
-  if(G.teams.every(t => t.directors.length >= 2)) {
+  if(G.teams.every(t => t.directors.length >= 3)) {
     renderDirRoster();
     renderDirProgress();
     renderHeader();
     renderOfferPanel();
     setTimeout(() => {
-      modal('All Directors Signed!', 'Every studio has 2 directors. Time to assemble your films.',
+      modal('All Directors Signed!', 'Every studio has 3 directors. Time to assemble your films.',
         [{label:'Back', action:()=>{}},
          {label:'Assemble Films →', gold:true, action:()=>{ showPhase('assemble'); renderAssemble(); }}]
       );
@@ -1423,58 +1444,141 @@ function refreshCard(idx) { renderDirRoster(); renderDirProgress(); renderHeader
 // ── Evaluate an offer ────────────────────────────────────
 
 function evaluateDirectorOffer(dir, team, fee, pct) {
-  const moneyScore  = fee + pct * 1.5;
-  const baseAsk     = dir.minFee + dir.minPct * 1.5;
-  const personality = 0.90 + (dir.idx % 5) * 0.05; // 0.90–1.10, deterministic
+  // ── Accept conditions (hard thresholds, NOT ratio-based) ──
+  // ★★★★★: requires BOTH high flat fee AND 20%+ back-end to consider accepting
+  //         Even then, 70% chance they still counter (they love to negotiate)
+  // ★★★★:  requires high fee OR 20%+ back-end; 50% chance they still counter
+  // ★★★:   accepts if offer is reasonably close to their ask
+  // ★★/★:  fairly easy to please
+
+  const isElite  = dir.stars >= 5;
+  const isStrong = dir.stars === 4;
+
+  // Hard accept gates for top directors
+  const meetsEliteBar   = pct >= 20 || fee >= dir.minFee * 2.0;
+  const meetsStrongBar  = pct >= 20 || fee >= dir.minFee * 1.5;
+
+  // Money score for counter math
+  const moneyScore   = fee + pct * 1.8;  // equity weighted higher — it's recurring
+  const baseAsk      = dir.minFee + dir.minPct * 1.8;
+  const personality  = 0.90 + (dir.idx % 5) * 0.05;
   const effectiveAsk = baseAsk * personality;
-  const ratio = moneyScore / effectiveAsk;
+  const ratio        = moneyScore / effectiveAsk;
 
-  // ★★★★★ — ALWAYS counter even on great offers (only accept if 150%+ of ask)
-  // ★★★★  — rarely accept outright; 15% chance if ratio ≥ 0.90
-  // ★★★   — accept if ratio ≥ 0.82
-  // ★★    — accept if ratio ≥ 0.75
-  const isElite = dir.stars >= 5;
-  const acceptRatio = isElite ? 1.50 : dir.stars === 4 ? 0.90 : dir.stars === 3 ? 0.82 : 0.75;
-  const skipAccept  = isElite || (dir.stars === 4 && Math.random() > 0.15);
-
-  if(ratio >= acceptRatio && !skipAccept) {
-    return {verdict:'accept', message:pick([
-      "Let's make something extraordinary.",
-      "You had me at the offer. Let's get to work.",
-      "Works for me. Let's shoot.",
-      "Consider it done.",
-    ])};
+  // ── ACCEPT ──
+  if(isElite) {
+    // ★★★★★: only accept if meets bar AND they feel generous (30% of the time)
+    if(meetsEliteBar && ratio >= 1.0 && Math.random() < 0.30) {
+      return {verdict:'accept', message:pick([
+        "You've done your homework. I respect that. Deal.",
+        "That's what I was hoping to hear. Let's make history.",
+        "Generous terms. I'm in — don't make me regret it.",
+      ])};
+    }
+  } else if(isStrong) {
+    // ★★★★: accept if meets bar AND ratio is good; still 50% chance they counter
+    if(meetsStrongBar && ratio >= 0.92 && Math.random() < 0.50) {
+      return {verdict:'accept', message:pick([
+        "Now we're talking. You've got a deal.",
+        "That works for me. Let's get into pre-production.",
+        "I was hoping you'd come in strong. Consider it done.",
+      ])};
+    }
+  } else if(dir.stars === 3) {
+    if(ratio >= 0.85) {
+      return {verdict:'accept', message:pick([
+        "Works for me. Let's shoot.",
+        "Good offer. I'm in.",
+        "Consider it done.",
+        "You had me at the number. Let's go.",
+      ])};
+    }
+  } else {
+    // ★★/★: grateful for the work
+    if(ratio >= 0.70) {
+      return {verdict:'accept', message:pick([
+        "Absolutely. Thank you for the opportunity.",
+        "I won't let you down. Deal.",
+        "You won't regret this. I'm ready.",
+      ])};
+    }
   }
 
-  // Counter floor: ★★★★★ will counter anything ≥ 55%; others ≥ 50%
-  const counterFloor = isElite ? 0.55 : 0.50;
+  // ── COUNTER ──
+  // Counter floor: ★★★★★ counters anything ≥ 45% of ask; others ≥ 50%
+  const counterFloor = isElite ? 0.45 : isStrong ? 0.50 : 0.55;
   if(ratio >= counterFloor) {
     const needed = effectiveAsk - moneyScore;
-    const prefersEq = dir.minPct > 0 && (dir.stars >= 4 || Math.random() > 0.5);
+
+    // ★★★★★/★★★★ aggressively push for equity (recurring income)
+    const wantsEq = dir.minPct > 0 && (isElite || isStrong || Math.random() > 0.5);
     let counterFee, counterPct;
-    if(prefersEq) {
-      const extraPct = Math.min(49-pct, Math.ceil(needed * 0.65 / 1.5));
-      counterFee = Math.max(fee+1, Math.ceil(fee + Math.max(0, needed - extraPct*1.5)));
-      counterPct = Math.min(49, pct + extraPct);
+
+    if(isElite) {
+      // Elite: always demand 20%+ if they don't have it, PLUS a strong flat fee
+      const targetPct = Math.max(pct, 20, dir.minPct);
+      const targetFee = Math.max(fee + 3, dir.minFee + Math.ceil(needed * 0.5));
+      counterFee = targetFee;
+      counterPct = Math.min(45, targetPct);
+    } else if(isStrong) {
+      // Strong: push for 20% if not there, or meaningful fee bump
+      const targetPct = wantsEq ? Math.max(pct, 20, dir.minPct) : pct;
+      const targetFee = wantsEq
+        ? Math.max(fee + 2, dir.minFee)
+        : Math.max(fee + 3, Math.ceil(fee + needed * 0.70));
+      counterFee = targetFee;
+      counterPct = Math.min(40, targetPct);
     } else {
-      counterFee = Math.max(fee+1, Math.ceil(fee + needed * 0.65));
-      counterPct = Math.min(49, pct + Math.max(0, Math.ceil((needed - needed*0.65)/1.5)));
+      // Mid-tier: more modest counter
+      counterFee = Math.max(fee + 1, Math.ceil(fee + needed * 0.60));
+      counterPct = wantsEq
+        ? Math.min(30, pct + Math.max(1, Math.ceil(needed * 0.4 / 1.8)))
+        : pct;
     }
 
-    const msg = isElite
-      ? pick(["My name carries weight. These are my terms.", "Interesting opener. Here's where we actually land.", "I don't do discounts. Let me be direct.", "Close — but elite directors don't settle."])
-      : pick(["You're close. Here's what works for me.", "I'm interested — meet me here.", "Good faith offer. Here's my counter.", "Almost there. One adjustment."]);
+    // Sanity: counter must always be strictly better than offer
+    if(counterFee === fee && counterPct === pct) counterFee = fee + 2;
+
+    const eliteMsgs = [
+      "I appreciate the gesture. But my name moves the needle — and my deal needs to reflect that.",
+      "Interesting opener. Let me tell you what it actually takes.",
+      "You want me. I want 20 points on the back end. We can work from there.",
+      "Not even close. But I like your studio — let's find a number that works.",
+      "I've turned down bigger studios for less interesting projects. Make it worth my while.",
+    ];
+    const strongMsgs = [
+      "You're in the right neighborhood. Here's where I land.",
+      "Almost there — I need the back-end to reflect the risk I'm taking.",
+      "Good start. I'll need a bit more on the points.",
+      "I'm interested. My counter is non-negotiable but fair.",
+      "You want commitment? Show me 20 points and we're done talking.",
+    ];
+    const midMsgs = [
+      "You're close. One more step and we have a deal.",
+      "Good faith offer. Here's mine.",
+      "Almost there — meet me here.",
+      "I like the project. Let's make the numbers work.",
+    ];
+
+    const msg = isElite ? pick(eliteMsgs) : isStrong ? pick(strongMsgs) : pick(midMsgs);
     return {verdict:'counter', message:msg, counterFee, counterPct};
   }
 
-  // Decline
-  return {verdict:'decline', message:pick([
+  // ── DECLINE ──
+  const eliteDecline = [
+    "I have three other offers. Call me when you're serious.",
+    "That's not a number — that's an insult. Pass.",
+    "My agent will pretend this call never happened.",
+    "You're going to need to do better than that to get me in a room.",
+  ];
+  const genDecline = [
     "I appreciate the call, but the offer isn't there.",
-    "My agent's already on the phone with another studio.",
     "Come back when the numbers make sense.",
     "That's not a serious offer. Pass.",
     "The project interests me — the deal doesn't.",
-  ])};
+    "My agent's already on the phone with another studio.",
+  ];
+  return {verdict:'decline', message: isElite ? pick(eliteDecline) : pick(genDecline)};
 }
 
 function pick(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
@@ -1647,16 +1751,22 @@ function buildMovieCard(team, film, fi) {
         </div>
       </div>
       <div class="mc-harmony">
-        <div class="mc-harmony-label">QUALITY SCORE · ${harmonyScore.label}</div>
-        <div class="harmony-bar">${harmonySegs}</div>
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:4px;">
-          <div style="font-size:11px;color:#333;font-weight:600;">
-            ${!harmonyScore.multiplier || harmonyScore.multiplier === '0' || harmonyScore.multiplier === 0 ? '—' : parseFloat(harmonyScore.multiplier).toFixed(1) + '×'} quality
-            ${film.budget ? `· +${Math.round(Math.min(0.50, film.budget/200)*100)}% marketing` : '· +0% marketing'}
+        <div class="mc-harmony-label">FILM SCORE PREVIEW</div>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:10px;letter-spacing:0.1em;color:#888;text-transform:uppercase;">Quality</span>
+            <span style="font-size:13px;font-weight:700;color:#111;">avg ★${harmonyScore.avgStars ? harmonyScore.avgStars.toFixed(1) : '—'}</span>
           </div>
-          <div style="font-size:10px;color:#888;">${harmonyScore.desc}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:10px;letter-spacing:0.1em;color:#888;text-transform:uppercase;">Marketing</span>
+            <span style="font-size:13px;font-weight:700;color:#111;">${film.budget ? '$' + film.budget + 'M' : '—'}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:10px;letter-spacing:0.1em;color:#888;text-transform:uppercase;">Luck</span>
+            <span style="font-size:12px;color:#aaa;font-style:italic;">1–100 at release</span>
+          </div>
         </div>
-        <div style="font-size:9px;color:#aaa;margin-top:5px;letter-spacing:0.05em;">SCORE = Quality× · (1 + Marketing Boost)</div>
+        <div style="font-size:9px;color:#ccc;margin-top:10px;border-top:1px solid #eee;padding-top:6px;">Score = Quality×3 + Marketing×2 + Luck×1</div>
       </div>
     </div>
   `;
@@ -1784,7 +1894,7 @@ function autoAssignAll() {
 
 function autoSignAllDirectors() {
   // Reset any existing director assignments
-  G.teams.forEach(t => { t.directors = []; t.budget = STARTING_BUDGET - teamSpend(t); });
+  G.teams.forEach(t => { t.directors = []; });
   G.directorPool.forEach(d => { d.signedBy = null; d.passed = false; d.dealFee = undefined; d.dealPct = undefined; });
 
   // Sort directors best→worst so teams compete for top talent
@@ -1793,21 +1903,20 @@ function autoSignAllDirectors() {
     .sort((a,b) => b.stars - a.stars || a.minFee - b.minFee);
 
   // Round-robin: each team picks 1 director per round, 2 rounds total
-  for(let round = 0; round < 2; round++) {
+  for(let round = 0; round < 3; round++) {
     G.teams.forEach(team => {
-      if(team.directors.length > round) return; // already picked this round
+      if(team.directors.length > round) return; // already picked this round (3 rounds)
       // Find best available affordable director
       const pick = ranked.find(d =>
         !G.directorPool[d.i].signedBy &&
         !G.directorPool[d.i].passed &&
-        team.budget >= d.minFee
+        true // no budget constraint
       );
       if(pick) {
         const dir = G.directorPool[pick.i];
         dir.signedBy = team.id;
         dir.dealFee = pick.minFee;
         dir.dealPct = pick.minPct;
-        team.budget -= pick.minFee;
         team.directors.push({dirIdx: pick.i, flatFee: pick.minFee, pct: pick.minPct});
       }
     });
@@ -1821,10 +1930,10 @@ function autoSignAllDirectors() {
   renderDirectors();
   renderDirProgress();
   renderHeader();
-  toast('⚡ Directors auto-signed — best available assigned to each team');
+  toast('⚡ Directors auto-signed — 3 per team');
 
   // Check if all done and show proceed modal
-  const allSigned = G.teams.every(t => t.directors.length >= 2);
+  const allSigned = G.teams.every(t => t.directors.length >= 3);
   if(allSigned) {
     setTimeout(() => {
       modal('All Directors Signed!',
@@ -1837,9 +1946,11 @@ function autoSignAllDirectors() {
 }
 
 function autoAssembleAllFilms() {
+  const windows = ['spring','summer','fall','holiday'];
+  const marketingOptions = [0, 10, 20, 30, 40, 50, 75, 100];
+
   G.teams.forEach(team => {
-    // Build flat sorted lists of each piece type (best first)
-    const keyMap = {scripts:'script', cast:'cast', crew:'crew'};
+    // Build flat lists of each piece type, shuffled randomly
     const tierMap = {scripts:SCRIPT_TIERS, cast:CAST_TIERS, crew:CREW_TIERS};
     const pieces = {};
     ['scripts','cast','crew'].forEach(type => {
@@ -1848,30 +1959,50 @@ function autoAssembleAllFilms() {
         const tier = tierMap[type][p.stars-1];
         for(let k=0;k<p.qty;k++) slots.push({stars:p.stars, label:tier.label, price:tier.price});
       });
-      slots.sort((a,b) => b.stars - a.stars); // best first
+      // Randomly shuffle piece assignment across films
+      for(let i = slots.length-1; i>0; i--) {
+        const j = Math.floor(Math.random()*(i+1));
+        [slots[i], slots[j]] = [slots[j], slots[i]];
+      }
       pieces[type] = slots;
     });
 
-    // Assign pieces to films: film 0 = best, film 1 = middle, film 2 = weakest
+    // Assign pieces randomly to films
     team.films.forEach((f, fi) => {
       f.script = pieces.scripts[fi] || null;
       f.cast   = pieces.cast[fi]    || null;
       f.crew   = pieces.crew[fi]    || null;
     });
 
-    // Assign directors: first director helms films 0 & 1, second helms film 2
-    const dirs = team.directors;
-    if(dirs[0] !== undefined) { team.films[0].director = dirs[0].dirIdx; team.films[1].director = dirs[0].dirIdx; }
-    if(dirs[1] !== undefined) { team.films[2].director = dirs[1].dirIdx; }
+    // Randomly assign directors across films (each director can helm up to 2)
+    const dirs = [...team.directors];
+    // Shuffle directors
+    for(let i=dirs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[dirs[i],dirs[j]]=[dirs[j],dirs[i]];}
+    // Assign: give each director at least 1 film, distribute remainder randomly
+    const dirAssign = [dirs[0]?.dirIdx, dirs[0]?.dirIdx, dirs[1]?.dirIdx]; // default
+    // Randomise which director gets the extra film
+    if(dirs.length >= 2 && Math.random() > 0.5) {
+      dirAssign[1] = dirs[1].dirIdx; // dir1 gets film1, dir0 gets film0, dir2 gets film2 if exists
+    }
+    if(dirs.length >= 3) {
+      dirAssign[2] = dirs[Math.floor(Math.random()*dirs.length)].dirIdx;
+    }
+    team.films.forEach((f, fi) => { f.director = dirAssign[fi] ?? (dirs[0]?.dirIdx ?? null); });
 
-    // Assign release windows & default marketing budgets
-    team.films[0].window = 'winter'; team.films[0].budget = 50;
-    team.films[1].window = 'fall';   team.films[1].budget = 30;
-    team.films[2].window = 'summer'; team.films[2].budget = 20;
+    // Randomly assign release windows — each film gets a different window
+    // Pick 3 random windows without repeating
+    const shuffledWindows = [...windows].sort(() => Math.random()-0.5);
+    const filmWindows = shuffledWindows.slice(0,3);
+    team.films.forEach((f, fi) => { f.window = filmWindows[fi]; });
+
+    // Random marketing budgets — varied, realistic spread
+    team.films.forEach(f => {
+      f.budget = marketingOptions[Math.floor(Math.random()*marketingOptions.length)];
+    });
   });
 
   renderAssemble();
-  toast('⚡ Films auto-assembled — best pieces to Winter, spread across all seasons');
+  toast('⚡ Auto-assembled — random windows, budgets & piece assignment');
 }
 
 function lockAllFilms() {
@@ -1910,15 +2041,15 @@ let RESULTS = {}; // computed results
 function computeResults() {
   RESULTS = {windows:{}, teams:{}};
   G.teams.forEach(t => {
-    // Sunk costs: what the team spent BEFORE any film revenue
-    const purchaseCost = teamSpend(t);                                          // cast+crew+scripts
-    const directorFees = t.directors.reduce((s,d) => s + (d.flatFee||0), 0);   // flat fees paid
-    const sunkCost = purchaseCost + directorFees;
+    // Costs: talent + director flat fees + marketing (no starting budget)
+    const talentCost   = teamSpend(t);
+    const directorFees = t.directors.reduce((s,d) => s + (d.flatFee||0), 0);
+    const sunkCost     = talentCost + directorFees;
     RESULTS.teams[t.id] = {
-      totalRevenue: 0,
-      totalMarketing: 0,   // sum of per-film marketing budgets
-      sunkCost,            // roster + director flat fees (paid upfront)
-      totalProfit: 0,      // totalRevenue - directorCuts - totalMarketing - sunkCost
+      totalRevenue:   0,
+      totalMarketing: 0,
+      sunkCost,       // talent + director flat fees (shown for reference)
+      totalProfit:    0,
     };
   });
 
@@ -1933,12 +2064,22 @@ function computeResults() {
         const marketing = Math.max(0, parseFloat(f.budget) || 0);
 
         // SCORING FORMULA:
-        // Quality is primary — exponential multiplier (0.3× to 3.8×)
-        // Marketing adds a diminishing-returns boost: each $10M ≈ +4%, caps around +50%
-        // Final score = qualityMult × (1 + marketingBoost)
-        // This means a great film ($0 marketing) beats a poor film ($100M marketing)
-        const marketingBoost = Math.min(0.50, marketing / 200); // $100M = +25%, $200M = +50% cap
-        const score = qualityMult * (1 + marketingBoost);
+        // score = (quality × 3) + (marketing × 2) + (luck × 1)
+        // Each component normalised to a 0–1 scale first, then weighted and summed.
+        //
+        // Quality:   qualityMult ranges ~0.45–4.30 → normalise to 0–1 over that range
+        // Marketing: $0–$200M → normalise to 0–1 (log scale, diminishing returns)
+        // Luck:      pure random 0–1
+        //
+        // Final score is the weighted sum — used proportionally within a window.
+
+        const Q_MIN = 0.45, Q_MAX = 4.30;
+        const qualityNorm   = Math.max(0, Math.min(1, (qualityMult - Q_MIN) / (Q_MAX - Q_MIN)));
+        const marketingNorm = Math.log(1 + marketing / 30) / Math.log(1 + 200 / 30); // 0 at $0, 1 at $200M
+        const luck          = Math.random(); // 0–1
+
+        const score = (qualityNorm * 3) + (marketingNorm * 2) + (luck * 1);
+        const marketingBoost = marketingNorm; // for display purposes
 
         films.push({
           team: t,
@@ -1949,7 +2090,8 @@ function computeResults() {
           avgStars: harmony.avgStars || 0,
           budget: marketing,
           score,
-          marketingBoost,
+          marketingNorm,
+          luck,
           revenue: 0,
         });
       });
@@ -1963,45 +2105,43 @@ function computeResults() {
     // Sort by score descending
     films.sort((a,b) => b.score - a.score);
 
-    // Check winner-take-most rule:
-    // If top film has BOTH best harmony (by multiplier) AND highest budget → takes 80%
-    const topFilm = films[0];
-    const topHarmony = topFilm.hmult;
-    const topBudget = topFilm.budget;
-    const topHarmonyIsUnique = films.filter(f=>f.hmult===topHarmony).length===1;
-    const topBudgetIsUnique  = films.filter(f=>f.budget===topBudget).length===1;
+    // Pure proportional revenue allocation by score
+    // Score already captures quality + marketing — no winner-take-all rule needed
+    const totalScore = films.reduce((s,f) => s + f.score, 0);
+    films.forEach(f => {
+      f.revenue = totalScore > 0
+        ? Math.round(w.pool * f.score / totalScore)
+        : Math.round(w.pool / films.length);
+    });
 
-    if(topHarmonyIsUnique && topBudgetIsUnique && films.length > 1) {
-      // Winner takes 80%
-      topFilm.revenue = Math.round(w.pool * 0.80);
-      const remainder = w.pool - topFilm.revenue;
-      const others = films.slice(1);
-      const totalOtherScore = others.reduce((s,f)=>s+f.score,0);
-      others.forEach(f => {
-        f.revenue = totalOtherScore > 0 ? Math.round(remainder * f.score / totalOtherScore) : Math.round(remainder / others.length);
-      });
-    } else {
-      // Proportional by score
-      const totalScore = films.reduce((s,f)=>s+f.score,0);
-      films.forEach(f => {
-        f.revenue = totalScore > 0 ? Math.round(w.pool * f.score / totalScore) : Math.round(w.pool / films.length);
-      });
-    }
-
-    // Tally team results
+    // Tally team results — itemised costs per film
     films.forEach(f => {
       const dirDeal = f.team.directors.find(d=>d.dirIdx===f.film.director);
-      const dirCut = dirDeal ? Math.round(f.revenue * dirDeal.pct / 100) : 0;
+      const dirCut  = dirDeal ? Math.round(f.revenue * dirDeal.pct / 100) : 0;
+      const dirFlatShare = dirDeal ? Math.round((dirDeal.flatFee||0) / 2) : 0; // director signed 2+ films, split flat fee
+
+      // Talent costs: price of the actual piece assigned to this film
+      const castCost   = f.film.cast   ? CAST_TIERS[f.film.cast.stars-1].price   : 0;
+      const crewCost   = f.film.crew   ? CREW_TIERS[f.film.crew.stars-1].price   : 0;
+      const scriptCost = f.film.script ? SCRIPT_TIERS[f.film.script.stars-1].price : 0;
+      const filmTalentCost = castCost + crewCost + scriptCost + dirFlatShare;
+
       const netRevenue = f.revenue - dirCut;
-      // Per-film profit = revenue after director % cut, minus this film's marketing spend
-      // Sunk costs (purchases + flat fees) are deducted at team level
-      const filmProfit = netRevenue - f.budget;
-      f.dirCut = dirCut;
-      f.netRevenue = netRevenue;
-      f.profit = filmProfit;
+      const filmProfit = netRevenue - f.budget - filmTalentCost;
+      const totalCosts = dirCut + dirFlatShare + castCost + crewCost + scriptCost + f.budget;
+
+      f.dirCut       = dirCut;
+      f.dirFlatShare = dirFlatShare;
+      f.castCost     = castCost;
+      f.crewCost     = crewCost;
+      f.scriptCost   = scriptCost;
+      f.talentCost   = filmTalentCost;
+      f.totalCosts   = totalCosts;
+      f.netRevenue   = netRevenue;
+      f.overhead     = filmTalentCost; // compat alias
+      f.profit       = filmProfit;
       RESULTS.teams[f.team.id].totalRevenue   += f.revenue;
       RESULTS.teams[f.team.id].totalMarketing += f.budget;
-      // totalProfit accumulated per-film; sunk cost deducted once at the end
     });
 
     RESULTS.windows[w.id] = {films, pool:w.pool};
@@ -2037,8 +2177,7 @@ let _revealAnim  = null; // rAF handle
 let _circles     = [];
 let _filmTargets = [];   // [{x,y,color,count}] per film in current window
 
-const REVEAL_SEASONS = ['summer','fall','winter'];
-const CIRCLE_COUNT = 100;
+const REVEAL_SEASONS = ['spring','summer','fall','holiday'];
 
 function startReveal() {
   document.getElementById('reveal-start-wrap').style.display = 'none';
@@ -2073,7 +2212,7 @@ function revealSeason(idx) {
   const canvas = document.getElementById('reveal-canvas');
   // Set physical pixel size
   const W = canvas.offsetWidth;
-  const H = 220;
+  const H = 300;
   canvas.width  = W * window.devicePixelRatio || W;
   canvas.height = H * window.devicePixelRatio || H;
   canvas.style.height = H + 'px';
@@ -2096,17 +2235,29 @@ function revealSeason(idx) {
   // Build film target zones — evenly spaced across canvas
   const margin = 60;
   const spacing = (W - margin*2) / Math.max(films.length - 1, 1);
+  // CIRCLE_COUNT and circleToMillion defined below after canvas setup
+  // (defined as const inside revealSeason, so we reference them via closure)
   _filmTargets = films.map((f, i) => ({
     x: films.length === 1 ? W/2 : margin + i * spacing,
     y: H - 50,
     color: f.team.color,
     label: f.film.title || (f.team.name + ' #' + (f.fi+1)),
     revenue: f.revenue,
-    count: Math.round(CIRCLE_COUNT * f.revenue / wr.pool), // circles proportional to revenue
+    count: 0, // set after CIRCLE_COUNT is defined
     assigned: 0,
+    arrived: 0,
     f,
   }));
-  // Make sure total = CIRCLE_COUNT
+
+  // 1 circle = $1M, so circle count = pool size in millions
+  // Cap at 1000 for performance, scale visually
+  const CIRCLE_COUNT = Math.min(wr.pool, 1000);
+  const circleToMillion = wr.pool / CIRCLE_COUNT; // each circle = this many $M
+
+  // Assign circle counts to targets now that CIRCLE_COUNT is known
+  _filmTargets.forEach(ft => {
+    ft.count = Math.round(CIRCLE_COUNT * ft.revenue / wr.pool);
+  });
   const totalAssigned = _filmTargets.reduce((s,t) => s + t.count, 0);
   _filmTargets[0].count += CIRCLE_COUNT - totalAssigned;
 
@@ -2119,7 +2270,7 @@ function revealSeason(idx) {
       y:  H/2 + Math.sin(angle) * r,
       vx: (Math.random() - 0.5) * 1.2,
       vy: (Math.random() - 0.5) * 1.2,
-      r:  4 + Math.random() * 2,
+      r:  Math.max(1.5, 3.5 - CIRCLE_COUNT / 500),  // smaller circles for larger pools
       color: '#ccc',
       targetColor: '#ccc',
       targetFilm: null,  // which film target this circle will go to
@@ -2174,7 +2325,8 @@ function revealSeason(idx) {
       if(ft.arrived > 0) {
         ctx.fillStyle = ft.color;
         ctx.font = 'bold 13px Barlow,sans-serif';
-        ctx.fillText(ft.arrived, ft.x, ft.y - 36);
+        const displayM = Math.round(ft.arrived * circleToMillion);
+        ctx.fillText('$' + displayM + 'M', ft.x, ft.y - 36);
       }
     });
 
@@ -2190,7 +2342,7 @@ function revealSeason(idx) {
           // soft bounce within central zone
           const dx = c.x - W/2, dy = c.y - H/2;
           if(Math.abs(dx) > 90) c.vx *= -1;
-          if(Math.abs(dy) > 60) c.vy *= -1;
+          if(Math.abs(dy) > 80) c.vy *= -1;
           // draw grey
           ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI*2);
           ctx.fillStyle = '#d0d0d0'; ctx.fill();
@@ -2253,22 +2405,57 @@ function showSeasonCards(wr, idx) {
   wr.films.forEach((f, rank) => {
     const isWinner = rank === 0;
     const card = document.createElement('div');
-    card.style.cssText = `flex:1;min-width:160px;background:#fff;border:2px solid ${isWinner ? f.team.color : '#e0e0e0'};border-radius:10px;padding:14px 16px;opacity:0;transition:opacity 0.4s;`;
-    const harmonyChips = Array.from({length:4}, (_,i) =>
-      `<div style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${i<f.harmony.matches?'var(--gold)':'#e8e8e8'};margin-right:2px;"></div>`
-    ).join('');
+    card.style.cssText = `flex:1;min-width:200px;background:#fff;border:2px solid #e0e0e0;border-radius:10px;overflow:hidden;opacity:0;transition:opacity 0.4s;display:flex;flex-direction:column;`;
+
+    // Ingredient bars — quality, marketing, luck all 0–1
+    const Q_MIN = 0.45, Q_MAX = 4.30;
+    const qNorm = Math.max(0, Math.min(1, ((f.hmult||0.45) - Q_MIN) / (Q_MAX - Q_MIN)));
+    const mNorm = f.marketingNorm || 0;
+    const lNorm = f.luck || 0;
+
+    function bar(label, norm, color, display) {
+      const pct = Math.round(norm * 100);
+      return `<div style="margin-bottom:6px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px;">
+          <span style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#aaa;">${label}</span>
+          <span style="font-size:11px;font-weight:700;color:#333;">${display}</span>
+        </div>
+        <div style="height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width 0.8s ease;"></div>
+        </div>
+      </div>`;
+    }
+
+    // Cost breakdown — uses itemised fields from computeResults
+    const profitColor = f.profit >= 0 ? '#1A7A3A' : '#C0392B';
+
     card.innerHTML = `
-      ${isWinner ? '<div style="font-size:20px;margin-bottom:4px;">👑</div>' : ''}
-      <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:13px;color:#111;margin-bottom:4px;">${f.film.title || f.team.name + ' Film ' + (f.fi+1)}</div>
-      <div style="font-size:11px;font-weight:700;color:${f.team.color};letter-spacing:0.05em;margin-bottom:8px;">${f.team.name}</div>
-      <div style="margin-bottom:6px;">${harmonyChips}</div>
-      <div style="font-size:11px;color:#888;margin-bottom:2px;">Ad budget: $${f.budget}M</div>
-      <div style="font-size:22px;font-family:'Bebas Neue',sans-serif;color:var(--gold);letter-spacing:0.05em;">$${f.revenue}M</div>
-      ${f.dirCut > 0 ? `<div style="font-size:10px;color:#aaa;">Dir cut: −$${f.dirCut}M</div>` : ''}
-      <div style="font-size:16px;font-family:'Bebas Neue',sans-serif;color:${f.profit >= 0 ? '#1A7A3A' : '#C0392B'};">${f.profit >= 0 ? '+' : ''}$${f.profit}M profit</div>
+      <div style="background:#f8f8f8;padding:10px 14px;">
+        <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:13px;color:#111;">${f.film.title || f.team.name + ' Film ' + (f.fi+1)}</div>
+        <div style="font-size:10px;font-weight:700;color:${f.team.color};letter-spacing:0.08em;margin-top:2px;">${f.team.name}</div>
+      </div>
+      <div style="padding:14px 14px 6px;">
+        ${bar('Quality', qNorm, '#B8860B', 'avg ★' + (f.avgStars||0).toFixed(1))}
+        ${bar('Marketing', mNorm, '#1558A0', '$' + (f.budget||0) + 'M')}
+        ${bar('Luck', lNorm, '#6B4C9A', Math.round(lNorm*100) + ' / 100')}
+      </div>
+      <div style="padding:0 14px 14px;display:flex;flex-direction:column;flex:1;">
+        <div style="border-top:1px solid #eee;padding-top:10px;margin-top:4px;display:flex;flex-direction:column;flex:1;">
+          <div style="font-size:22px;font-family:'Bebas Neue',sans-serif;color:var(--gold);letter-spacing:0.05em;line-height:1;">$${f.revenue}M</div>
+          <div style="font-size:10px;color:#bbb;margin:2px 0 10px;">box office revenue</div>
+          <div style="font-size:15px;font-weight:700;color:#C0392B;margin-bottom:5px;">− $${f.totalCosts||0}M total costs</div>
+          <div style="font-size:10px;color:#999;line-height:1.9;margin-bottom:10px;">
+            ${f.dirFlatShare>0 ? `Director fee $${f.dirFlatShare}M<br>` : ''}${f.dirCut>0 ? `Director B.O. cut $${f.dirCut}M<br>` : ''}${f.castCost>0 ? `Cast $${f.castCost}M<br>` : ''}${f.crewCost>0 ? `Crew $${f.crewCost}M<br>` : ''}${f.scriptCost>0 ? `Script $${f.scriptCost}M<br>` : ''}${(f.budget||0)>0 ? `Marketing $${f.budget}M` : ''}
+          </div>
+          <div style="margin-top:auto;border-top:2px solid #eee;padding-top:8px;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:10px;color:#aaa;letter-spacing:0.1em;text-transform:uppercase;">=&nbsp;Net profit</span>
+            <span style="font-size:22px;font-family:'Bebas Neue',sans-serif;color:${profitColor};min-width:90px;text-align:right;">${f.profit>=0?'+':''}$${f.profit}M</span>
+          </div>
+        </div>
+      </div>
     `;
     cards.appendChild(card);
-    setTimeout(() => { card.style.opacity = '1'; }, rank * 150 + 100);
+    setTimeout(() => { card.style.opacity = '1'; }, rank * 180 + 100);
   });
 
   showRevealNextOrFinish(idx);
@@ -2279,7 +2466,7 @@ function showRevealNextOrFinish(idx) {
   btn.style.display = 'block';
   if(idx >= REVEAL_SEASONS.length - 1) {
     btn.textContent = '★ SEE FINAL STANDINGS ★';
-    btn.onclick = finishReveal;
+    btn.onclick = showDramaticStandings;
   } else {
     const nextW = RELEASE_WINDOWS[idx + 1];
     btn.textContent = nextW.name.toUpperCase() + ' SEASON →';
@@ -2287,26 +2474,160 @@ function showRevealNextOrFinish(idx) {
   }
 }
 
+
+function showDramaticStandings() {
+  // Build sorted leaderboard data first
+  const lbData = G.teams.map(t => ({team:t, ...RESULTS.teams[t.id]})).sort((a,b) => b.totalProfit - a.totalProfit);
+
+  // Create full-screen overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'standings-overlay';
+  overlay.style.cssText = `
+    position:fixed;inset:0;background:#000;z-index:9999;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    opacity:0;transition:opacity 0.5s;
+  `;
+
+  const inner = document.createElement('div');
+  inner.style.cssText = 'text-align:center;width:100%;max-width:700px;padding:0 32px;';
+
+  const title = document.createElement('div');
+  title.style.cssText = `font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,5vw,52px);
+    letter-spacing:0.25em;color:#B8860B;margin-bottom:48px;opacity:0;
+    transition:opacity 0.6s,transform 0.6s;transform:translateY(-20px);`;
+  title.textContent = '★ FINAL STUDIO STANDINGS ★';
+  inner.appendChild(title);
+
+  const rankColors = ['#B8860B','#888','#8B5E3C','#555'];
+  const rankLabels = ['1ST','2ND','3RD','4TH'];
+
+  // Build rows top-down (1st place first in DOM), but revealed bottom-up for drama
+  const rows = lbData.map((item, rank) => {
+    const row = document.createElement('div');
+    row.style.cssText = `
+      display:flex;align-items:center;justify-content:space-between;
+      padding:18px 24px;margin-bottom:10px;border-radius:6px;
+      background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);
+      opacity:0;transform:translateX(-40px);transition:opacity 0.5s, transform 0.5s;
+    `;
+    const profitColor = item.totalProfit >= 0 ? '#4CAF50' : '#C0392B';
+    row.innerHTML = `
+      <div style="display:flex;align-items:center;gap:20px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:${rankColors[rank]};width:52px;text-align:center;">${rankLabels[rank]}</div>
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(18px,3vw,28px);color:${item.team.color};letter-spacing:0.08em;">${item.team.name}</div>
+          <div style="font-size:11px;color:#666;margin-top:2px;">Box office $${item.totalRevenue}M &nbsp;·&nbsp; Costs $${item.totalSpend}M</div>
+        </div>
+      </div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(24px,4vw,42px);color:${profitColor};letter-spacing:0.05em;">${item.totalProfit>=0?'+':''}$${item.totalProfit}M</div>
+    `;
+    inner.appendChild(row);
+    return row;
+  });
+
+  // Continue button
+  const contBtn = document.createElement('button');
+  contBtn.textContent = 'SEE FULL RESULTS →';
+  contBtn.style.cssText = `
+    margin-top:40px;padding:16px 48px;background:transparent;
+    border:2px solid #B8860B;color:#B8860B;font-family:'Bebas Neue',sans-serif;
+    font-size:20px;letter-spacing:0.2em;border-radius:3px;cursor:pointer;
+    opacity:0;transition:opacity 0.5s,background 0.2s,color 0.2s;
+  `;
+  contBtn.onmouseenter = () => { contBtn.style.background='#B8860B'; contBtn.style.color='#000'; };
+  contBtn.onmouseleave = () => { contBtn.style.background='transparent'; contBtn.style.color='#B8860B'; };
+  contBtn.onclick = () => {
+    overlay.style.opacity = '0';
+    setTimeout(() => { overlay.remove(); finishReveal(); }, 500);
+  };
+  inner.appendChild(contBtn);
+  overlay.appendChild(inner);
+  document.body.appendChild(overlay);
+
+  // Animate in
+  requestAnimationFrame(() => {
+    overlay.style.opacity = '1';
+    setTimeout(() => {
+      title.style.opacity = '1';
+      title.style.transform = 'translateY(0)';
+    }, 300);
+
+    // Reveal rows bottom-up with stagger
+    rows.forEach((row, i) => {
+      setTimeout(() => {
+        row.style.opacity = '1';
+        row.style.transform = 'translateX(0)';
+      }, 700 + i * 350);
+    });
+
+    // Show continue button after all rows
+    setTimeout(() => {
+      contBtn.style.opacity = '1';
+    }, 700 + rows.length * 350 + 400);
+  });
+}
+
 function finishReveal() {
   if(_revealAnim) { cancelAnimationFrame(_revealAnim); _revealAnim = null; }
   document.getElementById('reveal-stage').style.display = 'none';
   document.getElementById('results-windows').style.display = 'block';
+  const sb = document.getElementById('results-sidebar');
+  if(sb) sb.style.display = '';
 
-  // Render the full classic results table
+  // ── Leaderboard (shown first in sidebar) ──
+  const _lbData = G.teams.map(t => ({team:t, ...RESULTS.teams[t.id]})).sort((a,b)=>b.totalProfit-a.totalProfit);
+  const _rankClass = ['r1','r2','r3',''];
+  const _lb = document.getElementById('leaderboard');
+  if(_lb) _lb.style.display = '';
+  _lb.innerHTML = `<div class="lb-title">★ Final Studio Rankings ★</div>` +
+    _lbData.map((item,i) => `
+      <div class="lb-row" style="flex-direction:column;align-items:stretch;padding:14px 0;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div class="lb-rank ${_rankClass[i]}" style="font-size:28px;">${i+1}</div>
+          <div class="lb-name" style="color:${item.team.color};font-size:22px;">${item.team.name}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;padding-left:4px;">
+          <div style="display:flex;justify-content:space-between;">
+            <span style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#aaa;">Total Box Office</span>
+            <span style="font-size:14px;font-weight:700;color:var(--gold);">$${item.totalRevenue}M</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <span style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#aaa;">Total Costs</span>
+            <span style="font-size:14px;font-weight:700;color:#C0392B;">− $${item.totalSpend}M</span>
+          </div>
+          <div style="border-top:1px solid #e0e0e0;margin-top:4px;padding-top:6px;display:flex;justify-content:space-between;align-items:baseline;">
+            <span style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#aaa;">= Net Profit</span>
+            <span style="font-size:22px;font-family:'Bebas Neue',sans-serif;color:${item.totalProfit>=0?'#1E8449':'#C0392B'};">
+              ${item.totalProfit>=0?'+':''}$${item.totalProfit}M
+            </span>
+          </div>
+        </div>
+      </div>`).join('');
+
+  // ── Season result tables ──
   const container = document.getElementById('results-windows');
   container.innerHTML = '';
+
   RELEASE_WINDOWS.forEach(w => {
     const wr = RESULTS.windows[w.id];
     if(!wr || wr.films.length === 0) return;
     const div = document.createElement('div');
     div.className = 'window-result';
     const sorted = [...wr.films];
-    let filmRows = sorted.map((f,rank) => {
+
+    const filmRows = sorted.map((f,rank) => {
       const isWinner = rank === 0;
-      const harmonyChips = Array.from({length:4}, (_,i) =>
-        `<div class="hchip" style="background:${i<f.harmony.matches?'var(--gold)':'var(--ink5)'}"></div>`
-      ).join('');
       const title = f.film.title || `${f.team.name} Film ${f.fi+1}`;
+      const profitCol = f.profit >= 0 ? '#1E8449' : '#C0392B';
+      // Cost rows — only show if > 0
+      const costLines = [
+        f.dirFlatShare > 0  ? `Dir fee $${f.dirFlatShare}M`   : '',
+        f.dirCut > 0        ? `Dir B.O. cut $${f.dirCut}M`    : '',
+        f.castCost > 0      ? `Cast $${f.castCost}M`          : '',
+        f.crewCost > 0      ? `Crew $${f.crewCost}M`          : '',
+        f.scriptCost > 0    ? `Script $${f.scriptCost}M`      : '',
+        f.budget > 0        ? `Marketing $${f.budget}M`       : '',
+      ].filter(Boolean);
       return `<div class="wr-film-row${isWinner?' winner':''}">
         <div>
           <div class="wfr-title">${isWinner?'<span class="crown">👑</span>':''}${title}</div>
@@ -2314,24 +2635,26 @@ function finishReveal() {
         </div>
         <div>
           <div class="wfr-label">Quality</div>
-          <div style="display:flex;gap:3px;margin-top:3px;">${harmonyChips}</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px;">${typeof f.hmult==="number"?f.hmult.toFixed(1):f.hmult}× · avg ★${f.avgStars?f.avgStars.toFixed(1):"—"}</div>
+          <div style="font-size:12px;color:#555;margin-top:3px;">avg ★${f.avgStars?f.avgStars.toFixed(1):'—'}</div>
         </div>
         <div>
-          <div class="wfr-label">Ad Budget</div>
-          <div class="wfr-value" style="color:var(--text2);">$${f.budget}M</div>
-        </div>
-        <div>
-          <div class="wfr-label">Revenue</div>
+          <div class="wfr-label">Box Office</div>
           <div class="wfr-value" style="color:var(--gold);font-size:20px;">$${f.revenue}M</div>
-          ${f.dirCut>0?`<div style="font-size:9px;color:var(--dim);">Dir: −$${f.dirCut}M</div>`:''}
         </div>
         <div>
-          <div class="wfr-label">Profit</div>
-          <div class="wfr-value wfr-profit ${f.profit>=0?'pos':'neg'}" style="font-size:20px;">${f.profit>=0?'+':''}$${f.profit}M</div>
+          <div class="wfr-label" style="color:#C0392B;">Total Costs</div>
+          <div style="font-size:15px;font-weight:700;color:#C0392B;margin-bottom:4px;">− $${f.totalCosts}M</div>
+          <div style="font-size:9px;color:#aaa;line-height:1.7;">${costLines.join('<br>')}</div>
+        </div>
+        <div>
+          <div class="wfr-label">&nbsp;</div>
+          <div style="font-size:10px;color:#aaa;margin-bottom:2px;">=</div>
+          <div class="wfr-label">Net Profit</div>
+          <div class="wfr-value" style="font-size:20px;font-weight:700;color:${profitCol};">${f.profit>=0?'+':''}$${f.profit}M</div>
         </div>
       </div>`;
     }).join('');
+
     div.innerHTML = `
       <div class="wr-header">
         <div class="wr-month" style="font-size:28px;letter-spacing:0.2em;">${w.name.toUpperCase()} SEASON</div>
@@ -2339,35 +2662,56 @@ function finishReveal() {
         <div style="margin-left:auto;font-size:11px;color:var(--muted);">${wr.films.length} film${wr.films.length!==1?'s':''} competing</div>
       </div>
       <div class="wr-films">
-        <div style="display:grid;grid-template-columns:3fr 80px 80px 80px 80px;gap:8px;padding:8px 20px;border-bottom:1px solid var(--ink4);">
+        <div style="display:grid;grid-template-columns:3fr 70px 90px 130px 90px;gap:8px;padding:8px 20px;border-bottom:1px solid var(--ink4);">
           <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);">Film</div>
           <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);">Quality</div>
-          <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);">Ad Budget</div>
-          <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);">Revenue</div>
-          <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);">Profit</div>
+          <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);">Box Office</div>
+          <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:#C0392B;">Total Costs</div>
+          <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);">Net Profit</div>
         </div>
         ${filmRows}
       </div>`;
     container.appendChild(div);
   });
 
-  // Leaderboard
-  const lbData = G.teams.map(t => ({team:t, ...RESULTS.teams[t.id]})).sort((a,b)=>b.totalProfit-a.totalProfit);
-  const rankClass = ['r1','r2','r3',''];
-  const lb = document.getElementById('leaderboard');
-  lb.innerHTML = `<div class="lb-title">Final Studio Rankings — Net Profit</div>` +
-    lbData.map((item,i) => `
-      <div class="lb-row">
-        <div class="lb-rank ${rankClass[i]}">${i+1}</div>
-        <div>
-          <div class="lb-name" style="color:${item.team.color}">${item.team.name}</div>
-          <div style="font-size:10px;color:var(--dim);">Box office: $${item.totalRevenue}M</div>
-          <div style="font-size:10px;color:var(--dim);">Roster+dirs: $${item.sunkCost}M · Mktg: $${item.totalMarketing}M</div>
-        </div>
-        <div class="lb-profit ${item.totalProfit<0?'neg':''}">
-          ${item.totalProfit>=0?'+':''}$${item.totalProfit}M
-        </div>
-      </div>`).join('');
+  // ── BEST OF section ──
+  const allFilms = [];
+  RELEASE_WINDOWS.forEach(w => {
+    const wr = RESULTS.windows[w.id];
+    if(wr) wr.films.forEach(f => allFilms.push(f));
+  });
+  allFilms.sort((a,b) => b.profit - a.profit);
+  const top3    = allFilms.slice(0, 3);
+  const bottom3 = allFilms.slice(-3).reverse();
+
+  function bestCard(f, icon, borderColor) {  // icon kept for medals only
+    const title = f.film.title || `${f.team.name} Film ${f.fi+1}`;
+    const pColor = f.profit >= 0 ? '#1E8449' : '#C0392B';
+    return `<div style="flex:1;min-width:160px;background:#fff;border:2px solid ${borderColor};border-radius:8px;padding:14px 16px;">
+      <div style="font-size:18px;margin-bottom:6px;">${icon}</div>
+      <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:13px;color:#111;margin-bottom:3px;">${title}</div>
+      <div style="font-size:11px;font-weight:700;color:${f.team.color};letter-spacing:0.05em;margin-bottom:10px;">${f.team.name}</div>
+      <div style="font-size:11px;color:#888;">Box office: $${f.revenue}M</div>
+      <div style="font-size:11px;color:#888;margin-bottom:8px;">Costs: $${f.totalCosts}M</div>
+      <div style="font-size:20px;font-family:'Bebas Neue',sans-serif;color:${pColor};">${f.profit>=0?'+':''}$${f.profit}M</div>
+    </div>`;
+  }
+
+  const bestOf = document.createElement('div');
+  bestOf.className = 'window-result';
+  bestOf.style.marginTop = '24px';
+  bestOf.innerHTML = `
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:0.15em;color:#111;margin-bottom:20px;">🏆 BEST OF THE BOX OFFICE</div>
+    <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#aaa;margin-bottom:12px;">Highest Net Profit</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px;">
+      ${top3.map((f,i) => bestCard(f, ['🥇','🥈','🥉'][i], ['#B8860B','#888','#8B5E3C'][i])).join('')}
+    </div>
+    <div style="font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:#aaa;margin-bottom:12px;">Lowest Net Profit</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      ${bottom3.map((f,i) => bestCard(f, '💸', '#e0e0e0')).join('')}
+    </div>
+  `;
+  container.appendChild(bestOf);
 }
 
 
@@ -2441,6 +2785,143 @@ function loadGame() {
   };
   input.click();
 }
+
+
+// ════════════════════════════════════════════════════════
+//  TITLE SCREEN ANIMATION — Hollywood searchlights + bokeh
+// ════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('title-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width  = canvas.offsetWidth  * (window.devicePixelRatio||1);
+    canvas.height = canvas.offsetHeight * (window.devicePixelRatio||1);
+    ctx.scale(window.devicePixelRatio||1, window.devicePixelRatio||1);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const W = () => canvas.offsetWidth;
+  const H = () => canvas.offsetHeight;
+
+  // ── Searchlights ──
+  const beams = Array.from({length:5}, (_, i) => ({
+    x: W() * (0.1 + i * 0.2),  // base x position
+    angle: -Math.PI/2 + (Math.random()-0.5)*0.5,
+    speed: (0.004 + Math.random()*0.006) * (Math.random()>0.5?1:-1),
+    width: 0.04 + Math.random()*0.03,
+    alpha: 0.12 + Math.random()*0.08,
+  }));
+
+  // ── Bokeh lights ──
+  const bokeh = Array.from({length:60}, () => ({
+    x: Math.random(),
+    y: Math.random(),
+    r: 2 + Math.random()*14,
+    alpha: 0.04 + Math.random()*0.14,
+    twinkleSpeed: 0.005 + Math.random()*0.015,
+    twinkleOffset: Math.random()*Math.PI*2,
+    gold: Math.random() > 0.6,
+  }));
+
+  // ── Film strip particles ──
+  const strips = Array.from({length:8}, () => ({
+    x: Math.random() * 1.2 - 0.1,
+    y: Math.random(),
+    speed: 0.0002 + Math.random()*0.0003,
+    size: 18 + Math.random()*24,
+    alpha: 0.03 + Math.random()*0.06,
+    frames: 3 + Math.floor(Math.random()*5),
+  }));
+
+  let t = 0;
+
+  function draw() {
+    const w = W(), h = H();
+    ctx.clearRect(0, 0, w, h);
+
+    // Deep black background with subtle vignette
+    const bg = ctx.createRadialGradient(w/2, h*0.4, 0, w/2, h*0.4, w*0.8);
+    bg.addColorStop(0, '#0d0d0d');
+    bg.addColorStop(1, '#000000');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+
+    // ── Draw bokeh ──
+    bokeh.forEach(b => {
+      const alpha = b.alpha * (0.6 + 0.4*Math.sin(t*b.twinkleSpeed + b.twinkleOffset));
+      const grd = ctx.createRadialGradient(b.x*w, b.y*h, 0, b.x*w, b.y*h, b.r*2);
+      const col = b.gold ? `200,169,81` : `255,255,255`;
+      grd.addColorStop(0, `rgba(${col},${alpha})`);
+      grd.addColorStop(1, `rgba(${col},0)`);
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(b.x*w, b.y*h, b.r*2, 0, Math.PI*2);
+      ctx.fill();
+    });
+
+    // ── Draw searchlight beams ──
+    beams.forEach(beam => {
+      beam.angle += beam.speed;
+      // Clamp to sweep range (pointing upward)
+      if(beam.angle > -0.2) { beam.angle = -0.2; beam.speed *= -1; }
+      if(beam.angle < -Math.PI+0.2) { beam.angle = -Math.PI+0.2; beam.speed *= -1; }
+
+      const bx = beam.x;
+      // Beam tip at top of screen
+      const tipX = bx + Math.cos(beam.angle) * h * 1.5;
+      const tipY = h + Math.sin(beam.angle) * h * 1.5;
+
+      // Wide fan gradient
+      const halfW = beam.width;
+      const lx1 = bx + Math.cos(beam.angle - halfW) * h * 1.5;
+      const ly1 = h + Math.sin(beam.angle - halfW) * h * 1.5;
+      const lx2 = bx + Math.cos(beam.angle + halfW) * h * 1.5;
+      const ly2 = h + Math.sin(beam.angle + halfW) * h * 1.5;
+
+      const grd = ctx.createLinearGradient(bx, h, tipX, tipY);
+      grd.addColorStop(0,   `rgba(220,200,140,${beam.alpha*1.2})`);
+      grd.addColorStop(0.3, `rgba(220,200,140,${beam.alpha*0.5})`);
+      grd.addColorStop(1,   `rgba(220,200,140,0)`);
+
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.moveTo(bx, h);
+      ctx.lineTo(lx1, ly1);
+      ctx.lineTo(lx2, ly2);
+      ctx.closePath();
+      ctx.fill();
+    });
+
+    // ── Film strip particles drifting up ──
+    strips.forEach(s => {
+      s.y -= s.speed;
+      if(s.y < -0.1) { s.y = 1.1; s.x = Math.random()*1.2-0.1; }
+      const sx = s.x*w, sy = s.y*h, sz = s.size;
+      ctx.strokeStyle = `rgba(255,255,255,${s.alpha})`;
+      ctx.lineWidth = 1;
+      // Draw tiny film strip rectangles
+      for(let i=0;i<s.frames;i++) {
+        ctx.strokeRect(sx, sy + i*(sz*0.7), sz*0.6, sz*0.5);
+        ctx.fillStyle = `rgba(255,255,255,${s.alpha*0.3})`;
+        ctx.fillRect(sx+2, sy+2 + i*(sz*0.7), sz*0.6-4, sz*0.5-4);
+      }
+    });
+
+    // ── Subtle horizontal scan line atmosphere ──
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    for(let y=0; y<h; y+=4) {
+      ctx.fillRect(0, y, w, 2);
+    }
+
+    t++;
+    requestAnimationFrame(draw);
+  }
+
+  draw();
+})();
 
 </script>
 </body>
