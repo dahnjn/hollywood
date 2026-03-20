@@ -594,7 +594,7 @@ input[type=number] { -moz-appearance:textfield; }
     <div class="whose-turn-banner" id="dir-turn-banner">
       <div class="wtb-label">Making an offer</div>
       <div class="wtb-team" id="dir-turn-name">—</div>
-      <div class="wtb-count" id="dir-turn-count">0 / 3 signed</div>
+      <div class="wtb-count" id="dir-turn-count">0 / 2 signed</div>
     </div>
 
     <!-- Two-column layout: director roster (left) + active offer panel (right) -->
@@ -1267,7 +1267,7 @@ function renderDirProgress() {
   if(!bar) return;
   bar.innerHTML = G.teams.map(t => {
     const count = t.directors.length;
-    const pips = Array.from({length:3}, (_,i) =>
+    const pips = Array.from({length:2}, (_,i) =>
       `<div class="dpt-pip${i<count?' filled':''}"></div>`).join('');
     return `<div class="dir-prog-team">
       <div class="dpt-name" style="color:${t.color}">${t.name}</div>
@@ -1282,7 +1282,7 @@ function renderDirTurnBanner() {
   const el = document.getElementById('dir-turn-name');
   const ct = document.getElementById('dir-turn-count');
   if(el) { el.textContent = team.name; el.style.color = team.color; }
-  if(ct) ct.textContent = `${team.directors.length} / 3 signed`;
+  if(ct) ct.textContent = `${team.directors.length} / 2 signed`;
 }
 
 // ── Roster: all 12 directors, compact cards ──────────────
@@ -1323,7 +1323,7 @@ function buildRosterCard(idx, dimmed) {
   const activeTeam = G.teams[G.dirTurn];
   const isSelected = G.selectedDir === idx;
   const isClickable = !signed && !passed && !dimmed;
-  const alreadyFull = activeTeam.directors.length >= 3;
+  const alreadyFull = activeTeam.directors.length >= 2;
 
   const div = document.createElement('div');
   div.id = `roster-card-${idx}`;
@@ -1490,7 +1490,7 @@ function submitOffer(idx) {
 
   if(fee <= 0 && pct <= 0)      { toast('Enter a fee and/or percentage'); return; }
   if(pct >= 100)                 { toast('Cannot offer 100%+ equity'); return; }
-  if(team.directors.length >= 3) { toast('Already have 3 directors'); return; }
+  if(team.directors.length >= 2) { toast('Already have 2 directors'); return; }
   if(isSigned(dir))              { toast('That director is already signed'); return; }
 
   if(btn) { btn.disabled = true; btn.textContent = 'Waiting...'; }
@@ -1539,17 +1539,17 @@ function doAdvanceTurn() {
   let next = (G.dirTurn + 1) % 4;
   let loops = 0;
   while(loops < 4) {
-    if(G.teams[next].directors.length < 3) break;
+    if(G.teams[next].directors.length < 2) break;
     next = (next+1) % 4;
     loops++;
   }
-  if(G.teams.every(t => t.directors.length >= 3)) {
+  if(G.teams.every(t => t.directors.length >= 2)) {
     renderDirRoster();
     renderDirProgress();
     renderHeader();
     renderOfferPanel();
     setTimeout(() => {
-      modal('All Directors Signed!', 'Every studio has 3 directors. Time to assemble your films.',
+      modal('All Directors Signed!', 'Every studio has 2 directors. Time to assemble your films.',
         [{label:'Back', action:()=>{}},
          {label:'Assemble Films →', gold:true, action:()=>{ showPhase('assemble'); renderAssemble(); }}]
       );
@@ -1783,7 +1783,7 @@ function buildMovieCard(team, film, fi) {
       dirUsageCount[f.director]++;
     }
   });
-  const availDirs = team.directors.filter(d => dirUsageCount[d.dirIdx] < 1);
+  const availDirs = team.directors.filter(d => dirUsageCount[d.dirIdx] < 2);
 
   // Build star tier options for each slot type
   // Each team has a pool of purchased tiers; each film uses 1 slot from any tier (tracked by slot index)
@@ -2042,7 +2042,7 @@ function autoSignAllDirectors() {
     .sort((a,b) => b.stars - a.stars || a.minFee - b.minFee);
 
   // Round-robin: each team picks 1 director per round, 2 rounds total
-  for(let round = 0; round < 3; round++) {
+  for(let round = 0; round < 2; round++) {
     G.teams.forEach(team => {
       if(team.directors.length > round) return; // already picked this round (3 rounds)
       // Find best available affordable director
@@ -2069,10 +2069,10 @@ function autoSignAllDirectors() {
   renderDirectors();
   renderDirProgress();
   renderHeader();
-  toast('⚡ Directors auto-signed — 3 per team');
+  toast('⚡ Directors auto-signed — 2 per team');
 
   // Check if all done and show proceed modal
-  const allSigned = G.teams.every(t => t.directors.length >= 3);
+  const allSigned = G.teams.every(t => t.directors.length >= 2);
   if(allSigned) {
     setTimeout(() => {
       modal('All Directors Signed!',
@@ -2113,10 +2113,17 @@ function autoAssembleAllFilms() {
       f.crew   = pieces.crew[fi]    || null;
     });
 
-    // 1 director per film — shuffle and assign one each
+    // 2 directors: one helms 2 films, the other 1
+    // Randomly decide which director gets the extra film
     const dirs = [...team.directors];
     for(let i=dirs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[dirs[i],dirs[j]]=[dirs[j],dirs[i]];}
-    team.films.forEach((f, fi) => { f.director = dirs[fi]?.dirIdx ?? null; });
+    const lead = dirs[0]?.dirIdx ?? null;
+    const second = dirs[1]?.dirIdx ?? null;
+    // Random: lead gets films 0+1 or 0+2
+    const extraFilm = Math.random() > 0.5 ? 1 : 2;
+    team.films.forEach((f, fi) => {
+      f.director = (fi === 0 || fi === extraFilm) ? lead : second;
+    });
 
     // Randomly assign release windows — each film gets a different window
     // Pick 3 random windows without repeating
@@ -2143,7 +2150,7 @@ function lockAllFilms() {
       if(f.director !== null) dirUsage[f.director] = (dirUsage[f.director]||0) + 1;
     });
     Object.entries(dirUsage).forEach(([idx, count]) => {
-      if(count > 1) problems.push(`${t.name}: ${G.directorPool[idx].name} is assigned to ${count} films — each director can only helm 1 film`);
+      if(count > 2) problems.push(`${t.name}: ${G.directorPool[idx].name} is assigned to ${count} films — max 2 per director`);
     });
     t.films.forEach((f,i) => {
       if((f.director === null || f.director === undefined) || !f.script || !f.cast || !f.crew) problems.push(`${t.name} Film ${i+1}: missing pieces`);
@@ -2241,7 +2248,9 @@ function computeResults() {
     films.forEach(f => {
       const dirDeal = f.team.directors.find(d=>d.dirIdx===f.film.director);
       const dirCut  = dirDeal ? Math.round(f.revenue * dirDeal.pct / 100) : 0;
-      const dirFlatShare = dirDeal ? Math.round((dirDeal.flatFee||0) / 2) : 0; // director signed 2+ films, split flat fee
+      // Split flat fee by how many films this director is helming for this team
+      const dirFilmCount = f.team.films.filter(tf => tf.director === f.film.director).length;
+      const dirFlatShare = dirDeal ? Math.round((dirDeal.flatFee||0) / Math.max(1, dirFilmCount)) : 0;
 
       // Talent costs: price of the actual piece assigned to this film
       const castCost   = f.film.cast   ? CAST_TIERS[f.film.cast.stars-1].price   : 0;
