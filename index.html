@@ -2558,7 +2558,16 @@ function showSeasonCards(wr, idx) {
         <div style="font-size:10px;font-weight:700;color:${f.team.color};letter-spacing:0.08em;margin-top:2px;">${f.team.name}</div>
       </div>
       <div style="padding:14px 14px 6px;">
-        ${bar('Quality', qNorm, '#B8860B', starBadge(Math.round(f.avgStars||1),'26px') + (f.avgStars && f.avgStars % 1 !== 0 ? '<span style="font-size:9px;color:#aaa;margin-left:2px;">' + f.avgStars.toFixed(1) + '</span>' : ''))}
+        ${(()=>{
+          const mood = f.harmony && f.harmony.mood;
+          const raw = f.harmony ? f.harmony.rawAvg : f.avgStars;
+          const effective = f.avgStars || 0;
+          const moodVal = mood ? mood.mood : 0;
+          let qualLabel = effective.toFixed(1);
+          if(moodVal > 0)  qualLabel += ' <span style="font-size:9px;color:#1E8449;">(incl. +' + moodVal.toFixed(1) + ' happiness bonus)</span>';
+          if(moodVal < 0)  qualLabel += ' <span style="font-size:9px;color:#C0392B;">(incl. ' + moodVal.toFixed(1) + ' unhappy penalty)</span>';
+          return bar('Quality', qNorm, '#B8860B', qualLabel);
+        })()}
         ${bar('Marketing', mNorm, '#1558A0', '$' + (f.budget||0) + 'M')}
         ${bar('Luck', lNorm, '#6B4C9A', Math.round(lNorm*100) + ' / 100')}
       </div>
