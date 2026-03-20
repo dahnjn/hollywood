@@ -735,10 +735,10 @@ function teamAvgStars(team) {
 }
 
 const RELEASE_WINDOWS = [
-  {id:'spring',  name:'Spring',  pool:200},
-  {id:'summer',  name:'Summer',  pool:300},
-  {id:'fall',    name:'Fall',    pool:400},
-  {id:'holiday', name:'Holiday', pool:500},
+  {id:'spring',  name:'Spring',  pool:250},
+  {id:'summer',  name:'Summer',  pool:500},
+  {id:'fall',    name:'Fall',    pool:750},
+  {id:'holiday', name:'Holiday', pool:1000},
 ];
 
 const HARMONY_MULTIPLIER = {4:3.0, 3:2.0, 2:1.4, 1:0.8, 0:0.4};
@@ -1886,7 +1886,7 @@ function buildMovieCard(team, film, fi) {
         <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
           <div style="display:flex;align-items:center;justify-content:space-between;">
             <span style="font-size:10px;letter-spacing:0.1em;color:#888;text-transform:uppercase;">Quality</span>
-            <span style="font-size:13px;font-weight:700;color:#111;">${harmonyScore.avgStars ? starBadge(Math.round(harmonyScore.avgStars),'20px') + ' <span style="font-size:10px;color:#aaa;">avg ' + harmonyScore.avgStars.toFixed(1) + '</span>' : '—'}</span>
+            <span style="font-size:13px;font-weight:700;color:#111;">${harmonyScore.avgStars ? starBadge(harmonyScore.avgStars % 1 === 0 ? harmonyScore.avgStars : parseFloat(harmonyScore.avgStars.toFixed(1)),'26px') + (harmonyScore.mood && harmonyScore.mood.mood !== 0 ? ' <span style="font-size:9px;color:#aaa;">(raw ' + harmonyScore.rawAvg.toFixed(1) + ' ' + (harmonyScore.mood.mood > 0 ? '+' : '') + harmonyScore.mood.mood.toFixed(1) + ')</span>' : '') : '—'}</span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;">
             <span style="font-size:10px;letter-spacing:0.1em;color:#888;text-transform:uppercase;">Director</span>
@@ -1969,7 +1969,16 @@ function computeHarmony(team, film) {
 
   if(pieces.length === 0) return {matches:0, label:'No pieces assigned', multiplier:0, qualityScore:0, qualityMult:0, mood:null, desc:'Assign all 4 pieces to score', avgStars:0};
 
-  const avg = pieces.reduce((a,b)=>a+b,0) / pieces.length;
+  const rawAvg = pieces.reduce((a,b)=>a+b,0) / pieces.length;
+
+  // Director happiness shifts the effective avg BEFORE quality formula
+  // Thrilled (+0.5 stars): both non-negotiables met
+  // Neutral  (+0.0):       one met
+  // Unhappy  (-0.5 stars): neither met — e.g. avg 4.3 → 3.8
+  const dir = (film.director !== null && film.director !== undefined) ? G.directorPool[film.director] : null;
+  const moodData = dir ? checkFilmNonNegotiables(dir, film) : {mood:0, face:'—', label:'', color:'#aaa', metCount:2};
+
+  const avg  = Math.max(1, Math.min(5, rawAvg + moodData.mood)); // clamp 1–5
   const minS = Math.min(...pieces);
   const maxS = Math.max(...pieces);
 
@@ -1977,12 +1986,7 @@ function computeHarmony(team, film) {
   const base    = 0.45 + Math.pow(qualityScore, 0.95) * 1.70;
   const synergy = 1.0 + Math.max(0, minS - 2) * 0.20;
   const spike   = maxS >= 5 ? 1.25 : maxS >= 4 ? 1.10 : 1.0;
-  const baseQuality = base * synergy * spike;
-
-  // Director happiness bonus: +0.5 (thrilled) → 0 (neutral) → -0.5 (unhappy)
-  const dir = (film.director !== null && film.director !== undefined) ? G.directorPool[film.director] : null;
-  const moodData = dir ? checkFilmNonNegotiables(dir, film) : {mood:0, face:'—', label:'', color:'#aaa', metCount:2};
-  const qualityMult = Math.max(0.1, baseQuality + moodData.mood);
+  const qualityMult = base * synergy * spike;
 
   const barScore = qualityMult >= 3.5 ? 4 : qualityMult >= 2.5 ? 3 : qualityMult >= 1.5 ? 2 : qualityMult >= 0.9 ? 1 : 0;
   const labels = {4:'ELITE', 3:'STRONG', 2:'SOLID', 1:'MODEST', 0:'WEAK'};
@@ -1993,10 +1997,10 @@ function computeHarmony(team, film) {
     multiplier: qualityMult.toFixed(2),
     qualityScore,
     qualityMult,
-    baseQuality,
+    baseQuality: qualityMult,
     mood: moodData,
-    desc: `Avg ★${avg.toFixed(1)}`,
-    avgStars: avg
+    rawAvg,             // pre-mood average
+    avgStars: avg       // post-mood effective average (used in scoring)
   };
 }
 
@@ -2554,7 +2558,7 @@ function showSeasonCards(wr, idx) {
         <div style="font-size:10px;font-weight:700;color:${f.team.color};letter-spacing:0.08em;margin-top:2px;">${f.team.name}</div>
       </div>
       <div style="padding:14px 14px 6px;">
-        ${bar('Quality', qNorm, '#B8860B', starBadge(Math.round(f.avgStars||1),'16px') + ' avg ' + (f.avgStars||0).toFixed(1))}
+        ${bar('Quality', qNorm, '#B8860B', starBadge(Math.round(f.avgStars||1),'26px') + (f.avgStars && f.avgStars % 1 !== 0 ? '<span style="font-size:9px;color:#aaa;margin-left:2px;">' + f.avgStars.toFixed(1) + '</span>' : ''))}
         ${bar('Marketing', mNorm, '#1558A0', '$' + (f.budget||0) + 'M')}
         ${bar('Luck', lNorm, '#6B4C9A', Math.round(lNorm*100) + ' / 100')}
       </div>
@@ -2754,7 +2758,7 @@ function finishReveal() {
         </div>
         <div>
           <div class="wfr-label">Quality</div>
-          <div style="font-size:12px;color:#555;margin-top:3px;display:flex;align-items:center;gap:4px;">${f.avgStars ? starBadge(Math.round(f.avgStars),'16px') : ''}<span>${f.avgStars?f.avgStars.toFixed(1):'—'}</span></div>
+          <div style="font-size:12px;color:#555;margin-top:3px;display:flex;align-items:center;gap:4px;">${f.avgStars ? starBadge(Math.round(f.avgStars),'26px') : '<span>—</span>'}</div>
         </div>
         <div>
           <div class="wfr-label">Box Office</div>
