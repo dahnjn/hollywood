@@ -705,7 +705,7 @@ const SCRIPT_TIERS = [
   {stars:5, price:30,  label:'Acclaimed Original'},
 ];
 // Supply pool: 3 of each tier per category, shared across all teams
-const SUPPLY_PER_TIER = 3;
+const SUPPLY_PER_TIER = 4;
 function initSupply() {
   return {
     cast:    Array.from({length:5}, (_,i) => ({stars:i+1, remaining:SUPPLY_PER_TIER})),
@@ -714,6 +714,18 @@ function initSupply() {
   };
 }
 function starStr(n) { return '★'.repeat(n) + '☆'.repeat(5-n); }
+
+// Compact star badge: star outline with number inside
+function starBadge(n, size) {
+  size = size || '28px';
+  var fontSize = 'calc(' + size + ' * 0.45)';
+  return '<span style="display:inline-flex;align-items:center;justify-content:center;width:' + size + ';height:' + size + ';position:relative;vertical-align:middle;" title="' + n + ' stars">'
+    + '<svg viewBox="0 0 20 20" width="' + size + '" height="' + size + '" style="position:absolute;">'
+    + '<polygon points="10,1 12.9,7 19.5,7.6 14.8,11.8 16.4,18.2 10,14.5 3.6,18.2 5.2,11.8 0.5,7.6 7.1,7" fill="none" stroke="#B8860B" stroke-width="1.6"/>'
+    + '</svg><span style="position:relative;font-size:' + fontSize + ';font-weight:800;color:#B8860B;line-height:1;">' + n + '</span></span>';
+}
+// Text-only version for <option> elements
+function starBadgeText(n) { return '\u2605' + n; }
 function teamAvgStars(team) {
   const all = [...team.purchases.cast, ...team.purchases.crew, ...team.purchases.scripts];
   if(!all.length) return 0;
@@ -724,33 +736,103 @@ function teamAvgStars(team) {
 
 const RELEASE_WINDOWS = [
   {id:'spring',  name:'Spring',  pool:200},
-  {id:'summer',  name:'Summer',  pool:400},
-  {id:'fall',    name:'Fall',    pool:600},
-  {id:'holiday', name:'Holiday', pool:800},
+  {id:'summer',  name:'Summer',  pool:300},
+  {id:'fall',    name:'Fall',    pool:400},
+  {id:'holiday', name:'Holiday', pool:500},
 ];
 
 const HARMONY_MULTIPLIER = {4:3.0, 3:2.0, 2:1.4, 1:0.8, 0:0.4};
 
-// photo: filename from your GitHub repo (e.g. 'vera-okafor.jpg')
-// minStars: minimum avg star quality across cast+crew+scripts the director will accept (overridable with $)
+// Non-negotiables: 2 hard requirements per director.
+// If team doesn't meet them, multiplier on required offer = penalty below.
+// cat: 'cast'|'crew'|'script'  minStars: minimum tier required
 const DIRECTOR_POOL = [
-  // ★★★★★ — Elite directors: demanding, care deeply about everything — high bars all around
-  {name:"Daria Morel",    style:"Epic space opera, sweeping franchise DNA",  photo:"dir-04.jpg", minFee:24, minPct:10, stars:5, prefs:{cast:5, crew:4, script:4}},
-  {name:"Yael Okonjo",    style:"Afrofuturist spectacle, vibrant palette",   photo:"dir-09.jpg", minFee:21, minPct:0,  stars:5, prefs:{cast:5, crew:5, script:3}},
-  {name:"Lena Zhao",      style:"Debut feature, raw wuxia-influenced vision",photo:"dir-06.jpg", minFee:1,  minPct:1,  stars:1, prefs:{cast:2, crew:2, script:3}},
-  {name:"Marcus Lund",    style:"First-timer, obsessive world-building style",photo:"dir-02.jpg", minFee:1,  minPct:1,  stars:1, prefs:{cast:2, crew:3, script:4}},
-  // ★★★★ — Established directors: strong standards, one clear specialty
-  {name:"Vera Okafor",    style:"Visceral action, practical effects",        photo:"dir-01.jpg", minFee:14, minPct:6,  stars:4, prefs:{cast:5, crew:4, script:2}},
-  {name:"Petra Hamm",     style:"Psychological sci-fi, unreliable reality",  photo:"dir-07.jpg", minFee:12, minPct:5,  stars:4, prefs:{cast:2, crew:3, script:5}},
-  {name:"Bo Sung",        style:"Techno-thriller, corporate dystopia",       photo:"dir-11.jpg", minFee:13, minPct:5,  stars:4, prefs:{cast:3, crew:5, script:3}},
-  {name:"River Castillo", style:"Neo-noir, rain-soaked dystopias",           photo:"dir-08.jpg", minFee:11, minPct:4,  stars:4, prefs:{cast:4, crew:2, script:4}},
-  // ★★★ — Mid-tier directors: one strong suit, others moderate
-  {name:"Cole Whitmore",  style:"High-concept crowd-pleasers, fast pacing",  photo:"dir-03.jpg", minFee:9,  minPct:4,  stars:3, prefs:{cast:4, crew:2, script:3}},
-  {name:"Sam Eriksen",    style:"Kaiju-scale destruction, crowd hype",       photo:"dir-10.jpg", minFee:7,  minPct:0,  stars:3, prefs:{cast:3, crew:4, script:1}},
-  // ★★ — Hungry directors: willing to work with less, lower expectations
-  {name:"Tobias Rhenn",   style:"Eco-thriller, naturalistic performance",    photo:"dir-05.jpg", minFee:5,  minPct:3,  stars:2, prefs:{cast:2, crew:3, script:2}},
-  {name:"Freya Holt",     style:"Body horror, transgressive imagery",        photo:"dir-12.jpg", minFee:4,  minPct:2,  stars:2, prefs:{cast:1, crew:2, script:3}},
+  // ★★★★★ — Elite: both requirements are demanding (★4–5 thresholds)
+  {name:"Daria Morel",    photo:"dir-04.jpg", minFee:24, minPct:10, stars:5,
+   reqs:[{cat:'cast',  minStars:5, label:'★5 Cast'},     {cat:'script', minStars:4, label:'★4 Script'}]},
+  {name:"Yael Okonjo",    photo:"dir-09.jpg", minFee:21, minPct:0,  stars:5,
+   reqs:[{cat:'cast',  minStars:5, label:'★5 Cast'},     {cat:'crew',   minStars:4, label:'★4 Crew'}]},
+  {name:"Lena Zhao",      photo:"dir-06.jpg", minFee:1,  minPct:1,  stars:1,
+   reqs:[{cat:'script',minStars:2, label:'★2 Script'},      {cat:'crew',   minStars:1, label:'★1 Crew'}]},
+  {name:"Marcus Lund",    photo:"dir-02.jpg", minFee:1,  minPct:1,  stars:1,
+   reqs:[{cat:'script',minStars:2, label:'★2 Script'},      {cat:'cast',   minStars:1, label:'★1 Cast'}]},
+  // ★★★★ — Established: one high req (★4+), one moderate (★3+)
+  {name:"Vera Okafor",    photo:"dir-01.jpg", minFee:14, minPct:6,  stars:4,
+   reqs:[{cat:'cast',  minStars:4, label:'★4 Cast'},     {cat:'crew',   minStars:3, label:'★3 Crew'}]},
+  {name:"Petra Hamm",     photo:"dir-07.jpg", minFee:12, minPct:5,  stars:4,
+   reqs:[{cat:'script',minStars:4, label:'★4 Script'},   {cat:'cast',   minStars:3, label:'★3 Cast'}]},
+  {name:"Bo Sung",        photo:"dir-11.jpg", minFee:13, minPct:5,  stars:4,
+   reqs:[{cat:'crew',  minStars:4, label:'★4 Crew'},     {cat:'script', minStars:3, label:'★3 Script'}]},
+  {name:"River Castillo", photo:"dir-08.jpg", minFee:11, minPct:4,  stars:4,
+   reqs:[{cat:'script',minStars:4, label:'★4 Script'},   {cat:'crew',   minStars:3, label:'★3 Crew'}]},
+  // ★★★ — Mid-tier: both requirements are moderate (★3)
+  {name:"Cole Whitmore",  photo:"dir-03.jpg", minFee:9,  minPct:4,  stars:3,
+   reqs:[{cat:'cast',  minStars:3, label:'★3 Cast'},      {cat:'script', minStars:3, label:'★3 Script'}]},
+  {name:"Sam Eriksen",    photo:"dir-10.jpg", minFee:7,  minPct:0,  stars:3,
+   reqs:[{cat:'cast',  minStars:3, label:'★3 Cast'},      {cat:'crew',   minStars:3, label:'★3 Crew'}]},
+  // ★★ — Hungry: easy requirements (★2)
+  {name:"Tobias Rhenn",   photo:"dir-05.jpg", minFee:5,  minPct:3,  stars:2,
+   reqs:[{cat:'cast',  minStars:2, label:'★2 Cast'},       {cat:'crew',   minStars:2, label:'★2 Crew'}]},
+  {name:"Freya Holt",     photo:"dir-12.jpg", minFee:4,  minPct:2,  stars:2,
+   reqs:[{cat:'crew',  minStars:2, label:'★2 Crew'},       {cat:'script', minStars:2, label:'★2 Script'}]},
+  // ★★★★★ — New elite directors (dir-13 through dir-15)
+  {name:"Reza Shirazi",   photo:"dir-13.jpg", minFee:23, minPct:9,  stars:5,
+   reqs:[{cat:'script',minStars:5, label:'★5 Script'},  {cat:'crew',   minStars:4, label:'★4 Crew'}]},
+  {name:"Nia Adeyemi",    photo:"dir-14.jpg", minFee:22, minPct:8,  stars:5,
+   reqs:[{cat:'cast',  minStars:4, label:'★4 Cast'},     {cat:'script', minStars:5, label:'★5 Script'}]},
+  {name:"Soren Vance",    photo:"dir-15.jpg", minFee:20, minPct:9,  stars:5,
+   reqs:[{cat:'crew',  minStars:5, label:'★5 Crew'},    {cat:'cast',   minStars:4, label:'★4 Cast'}]},
+  // ★★★ — New mid-tier directors (dir-16 through dir-18)
+  {name:"Malia Fonoti",   photo:"dir-16.jpg", minFee:10, minPct:3,  stars:3,
+   reqs:[{cat:'script',minStars:3, label:'★3 Script'},    {cat:'cast',   minStars:2, label:'★2 Cast'}]},
+  {name:"Dev Anand",      photo:"dir-17.jpg", minFee:8,  minPct:4,  stars:3,
+   reqs:[{cat:'crew',  minStars:3, label:'★3 Crew'},      {cat:'cast',   minStars:2, label:'★2 Cast'}]},
+  {name:"Zara Osei",      photo:"dir-18.jpg", minFee:9,  minPct:3,  stars:3,
+   reqs:[{cat:'cast',  minStars:3, label:'★3 Cast'},      {cat:'script', minStars:2, label:'★2 Script'}]},
 ];
+
+// Check non-negotiables against TEAM INVENTORY (signing phase)
+// — uses team's best available piece per category
+function checkNonNegotiables(dir, team) {
+  if(!dir.reqs) return {met:[true,true], penalty:1.0, summary:''};
+
+  function teamBest(cat) {
+    const key = cat === 'script' ? 'scripts' : cat;
+    return Math.max(0, ...team.purchases[key].filter(p=>p.qty>0).map(p=>p.stars));
+  }
+
+  const met = dir.reqs.map(r => teamBest(r.cat) >= r.minStars);
+  const unmetCount = met.filter(m => !m).length;
+  const penalty = unmetCount === 0 ? 1.0 : unmetCount === 1 ? 1.6 : 2.5;
+  const summary = dir.reqs.map((r,i) => `${r.label}: ${met[i] ? '✓' : '✗'}`).join(' · ');
+  return {met, penalty, summary};
+}
+
+// Check non-negotiables against ASSIGNED FILM PIECES (assemble phase)
+// — only the actual cast/crew/script assigned to this specific film counts
+// Returns directorMood: +0.5 (both met) → 0 (one met) → -0.5 (neither met)
+// and a happiness level 0-4 (😊😊→😐→😞)
+function checkFilmNonNegotiables(dir, film) {
+  if(!dir || !dir.reqs) return {metCount:2, mood:0.5, face:'😄', label:'Thrilled', color:'#1E8449'};
+
+  function filmVal(cat) {
+    if(cat === 'cast')   return film.cast   ? film.cast.stars   : 0;
+    if(cat === 'crew')   return film.crew   ? film.crew.stars   : 0;
+    if(cat === 'script') return film.script ? film.script.stars : 0;
+    return 0;
+  }
+
+  const met = dir.reqs.map(r => filmVal(r.cat) >= r.minStars);
+  const metCount = met.filter(Boolean).length;
+
+  // mood bonus: +0.5 both met, 0 one met, -0.5 neither met
+  const mood = metCount === 2 ? 0.5 : metCount === 1 ? 0 : -0.5;
+  const face  = metCount === 2 ? '😄' : metCount === 1 ? '😐' : '😞';
+  const label = metCount === 2 ? 'Thrilled' : metCount === 1 ? 'Neutral' : 'Unhappy';
+  const color = metCount === 2 ? '#1E8449' : metCount === 1 ? '#B8860B' : '#C0392B';
+
+  return {met, metCount, mood, face, label, color};
+}
 
 // ════════════════════════════════════════════════════════
 //  GAME STATE
@@ -952,7 +1034,7 @@ function renderDraftMarket() {
 
       const soldOut = remaining === 0;
       tile.innerHTML = `
-        <div style="font-size:13px;color:#B8860B;letter-spacing:0.05em;">${stars}</div>
+        <div style="display:flex;justify-content:center;margin-bottom:2px;">${stars}</div>
         <div style="font-size:9px;color:#777;margin:2px 0;">${tier.label}</div>
         <div style="font-size:13px;font-weight:700;color:#111;">$${tier.price}M</div>
         <div style="font-size:9px;color:${remaining<=1?'#C0392B':'#888'};margin-top:3px;">${soldOut ? 'SOLD OUT' : remaining + ' left'}</div>
@@ -1032,9 +1114,8 @@ function renderDraftRosters() {
         .filter(p => p.qty > 0)
         .flatMap(p => {
           const tier = cat.tiers[p.stars-1];
-          const stars = '★'.repeat(p.stars);
           return Array.from({length:p.qty}, () =>
-            `<span style="display:inline-block;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:3px;padding:1px 5px;font-size:10px;margin:1px;color:#B8860B;">${stars}</span>`
+            `<span style="display:inline-flex;align-items:center;margin:1px;">${starBadge(p.stars, '28px')}</span>`
           );
         }).join('');
       const count = teamSlotCount(team, cat.key);
@@ -1045,8 +1126,12 @@ function renderDraftRosters() {
       </div>`;
     }).join('');
 
+    const spent = teamSpend(team);
     card.innerHTML = `
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:0.08em;color:${team.color};margin-bottom:2px;">${team.name} ${done?'✓':''}</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:0.08em;color:${team.color};">${team.name} ${done?'✓':''}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:${spent>0?'#C0392B':'#ccc'};">$${spent}M</div>
+      </div>
       ${rosterRows}
     `;
     container.appendChild(card);
@@ -1067,37 +1152,47 @@ function finishDraft() {
 }
 
 function autoAssignDraft() {
-  // Reset all purchases and supply
+  // Reset supply and purchases
   G.supply = initSupply();
   G.teams.forEach(team => {
     ['cast','crew','scripts'].forEach(type => {
-      const tiers = type==='cast'?CAST_TIERS:type==='crew'?CREW_TIERS:SCRIPT_TIERS;
-      team.purchases[type].forEach((p,i) => { p.qty = 0; });
+      team.purchases[type].forEach(p => { p.qty = 0; });
     });
   });
 
-  // Round-robin: each team picks best available affordable option for their most-needed slot
-  let safety = 200;
+  // Assign each team a distinct strategy so simulations vary
+  // Strategies differ in: which tier they target, which category they prioritise
+  const strategies = [
+    // 0: Prestige — go high stars (★4-5) in one category, scrimp elsewhere
+    { name:'Prestige Cast',   catPriority:['cast','crew','scripts'],   tierPref:[4,3,2,1,0] },
+    // 1: Cheap & Lucky — all low stars, save everything for marketing
+    { name:'Budget Blitz',    catPriority:['scripts','crew','cast'],   tierPref:[0,1,2,3,4] },
+    // 2: Balanced mid — steady ★3 across the board
+    { name:'Balanced',        catPriority:['cast','crew','scripts'],   tierPref:[2,3,1,4,0] },
+    // 3: Script-led — chase great scripts first, fill rest cheaply
+    { name:'Script Focus',    catPriority:['scripts','cast','crew'],   tierPref:[3,4,2,1,0] },
+  ];
+
+  // Shuffle which strategy each team gets so it's random each run
+  const shuffled = strategies.map((s,i)=>i).sort(()=>Math.random()-0.5);
+  G.teams.forEach((team,i) => { team._strategy = strategies[shuffled[i]]; });
+
+  let safety = 300;
   while(safety-- > 0 && !G.teams.every(t => teamTotalSlots(t) >= 9)) {
     const team = G.teams[G.draftTurn];
     if(teamTotalSlots(team) >= 9) { advanceDraftTurnSilent(); continue; }
 
-    // Pick the most-needed category, then highest affordable tier
-    const cats = ['cast','crew','scripts'];
-    // Prefer whichever category is most empty
-    const needsCat = cats.filter(c => teamSlotCount(team,c) < 3)
-      .sort((a,b) => teamSlotCount(team,a) - teamSlotCount(team,b));
+    const strat = team._strategy || strategies[0];
+    // Pick most-needed category in strategy's preferred order
+    const needsCat = strat.catPriority.filter(c => teamSlotCount(team,c) < 3);
 
     let picked = false;
     for(const cat of needsCat) {
       const tiers = cat==='cast'?CAST_TIERS:cat==='crew'?CREW_TIERS:SCRIPT_TIERS;
-      // Try from ★3 down to ★1 (balanced approach)
-      const preferred = [2,1,0,3,4]; // indices: ★3,★2,★1,★4,★5
-      for(const ti of preferred) {
-        const supply = G.supply[cat][ti];
-        const tier = tiers[ti];
-        if(supply.remaining > 0) {
-          supply.remaining--;
+      // Try tiers in strategy's preferred order
+      for(const ti of strat.tierPref) {
+        if(G.supply[cat][ti].remaining > 0) {
+          G.supply[cat][ti].remaining--;
           team.purchases[cat][ti].qty++;
           picked = true;
           break;
@@ -1105,13 +1200,28 @@ function autoAssignDraft() {
       }
       if(picked) break;
     }
-    if(!picked) break; // can't afford anything
+    // Fallback: take anything available
+    if(!picked) {
+      outer: for(const cat of ['cast','crew','scripts']) {
+        if(teamSlotCount(team,cat) >= 3) continue;
+        for(let ti=0;ti<5;ti++) {
+          if(G.supply[cat][ti].remaining > 0) {
+            G.supply[cat][ti].remaining--;
+            team.purchases[cat][ti].qty++;
+            picked = true;
+            break outer;
+          }
+        }
+      }
+    }
+    if(!picked) break;
     advanceDraftTurnSilent();
   }
 
   G.draftTurn = 0;
   renderDraft();
-  toast('⚡ Auto-drafted — balanced ★3/★2/★1 spread for each team');
+  const names = G.teams.map(t => `${t.name}: ${t._strategy ? t._strategy.name : '—'}`).join(' · ');
+  toast('⚡ Auto-drafted — ' + names);
 }
 
 function advanceDraftTurnSilent() {
@@ -1227,7 +1337,7 @@ function buildRosterCard(idx, dimmed) {
   }
 
   const photoSrc = `photos/${dir.photo}`;
-  const dirStars = '★'.repeat(dir.stars) + '<span style="color:#ddd;">★</span>'.repeat(5-dir.stars);
+  const dirStars = starBadge(dir.stars, '36px');
 
   const prefHtml = ''; // removed — not shown to players
 
@@ -1238,7 +1348,13 @@ function buildRosterCard(idx, dimmed) {
   } else if(passed) {
     statusHtml = `<div style="font-size:11px;color:#C0392B;margin-top:4px;">No deal reached</div>`;
   } else if(!alreadyFull) {
-    statusHtml = `<div style="font-size:10px;color:#1558A0;margin-top:4px;font-style:italic;">Click to make an offer</div>`;
+    const nn = checkNonNegotiables(dir, G.teams[G.dirTurn]);
+    const nnHtml = dir.reqs ? dir.reqs.map((r,i) => {
+      const ok = nn.met[i];
+      return `<span style="font-size:9px;padding:1px 5px;border-radius:3px;margin-right:3px;margin-top:2px;display:inline-block;
+        background:${ok?'#e8f5e9':'#fdecea'};color:${ok?'#1E8449':'#C0392B'};">${r.label}${ok?' ✓':' ✗'}</span>`;
+    }).join('') : '';
+    statusHtml = `<div style="margin-top:5px;">${nnHtml}<div style="font-size:10px;color:#1558A0;margin-top:4px;font-style:italic;">Click to make an offer</div></div>`;
   }
 
   div.innerHTML = `
@@ -1327,7 +1443,18 @@ function renderOfferPanel() {
 
         <div style="border-top:1px solid #eee;margin:14px 0 12px;"></div>
 
-        <div style="font-size:11px;color:#999;font-style:italic;margin-bottom:12px;">Terms undisclosed — make your offer</div>
+        <div style="font-size:11px;color:#999;font-style:italic;margin-bottom:8px;">Terms undisclosed — make your offer</div>
+        ${(()=>{
+          const nn = checkNonNegotiables(dir, activeTeam);
+          const chips = dir.reqs ? dir.reqs.map((r,i)=>{
+            const ok = nn.met[i];
+            return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+              <span style="font-size:10px;padding:2px 8px;border-radius:3px;background:${ok?'#e8f5e9':'#fdecea'};color:${ok?'#1E8449':'#C0392B'};font-weight:600;">${r.label}</span>
+              <span style="font-size:10px;color:${ok?'#1E8449':'#C0392B'};">${ok?'✓ You have this':'✗ You lack this'}</span>
+            </div>`;
+          }).join('') : '';
+          return chips;
+        })()}
 
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
           <div style="display:flex;align-items:center;gap:4px;">
@@ -1444,6 +1571,8 @@ function refreshCard(idx) { renderDirRoster(); renderDirProgress(); renderHeader
 // ── Evaluate an offer ────────────────────────────────────
 
 function evaluateDirectorOffer(dir, team, fee, pct) {
+  // Apply non-negotiable penalty: missing requirements raise the effective ask
+  const nn = checkNonNegotiables(dir, team);
   // ── Accept conditions (hard thresholds, NOT ratio-based) ──
   // ★★★★★: requires BOTH high flat fee AND 20%+ back-end to consider accepting
   //         Even then, 70% chance they still counter (they love to negotiate)
@@ -1459,10 +1588,11 @@ function evaluateDirectorOffer(dir, team, fee, pct) {
   const meetsStrongBar  = pct >= 20 || fee >= dir.minFee * 1.5;
 
   // Money score for counter math
-  const moneyScore   = fee + pct * 1.8;  // equity weighted higher — it's recurring
+  const moneyScore   = fee + pct * 1.8;
   const baseAsk      = dir.minFee + dir.minPct * 1.8;
   const personality  = 0.90 + (dir.idx % 5) * 0.05;
-  const effectiveAsk = baseAsk * personality;
+  // Non-negotiable penalty raises the effective ask — missing requirements = harder to sign
+  const effectiveAsk = baseAsk * personality * nn.penalty;
   const ratio        = moneyScore / effectiveAsk;
 
   // ── ACCEPT ──
@@ -1539,12 +1669,14 @@ function evaluateDirectorOffer(dir, team, fee, pct) {
     // Sanity: counter must always be strictly better than offer
     if(counterFee === fee && counterPct === pct) counterFee = fee + 2;
 
+    const missingReqs = dir.reqs ? dir.reqs.filter((r,i) => !nn.met[i]).map(r=>r.label) : [];
+    const reqNote = missingReqs.length > 0 ? ` And frankly — ${missingReqs.join(', ')} is non-negotiable for me.` : '';
     const eliteMsgs = [
-      "I appreciate the gesture. But my name moves the needle — and my deal needs to reflect that.",
-      "Interesting opener. Let me tell you what it actually takes.",
-      "You want me. I want 20 points on the back end. We can work from there.",
-      "Not even close. But I like your studio — let's find a number that works.",
-      "I've turned down bigger studios for less interesting projects. Make it worth my while.",
+      `I appreciate the gesture. But my name moves the needle — and my deal needs to reflect that.${reqNote}`,
+      `Interesting opener. Let me tell you what it actually takes.${reqNote}`,
+      `You want me. I want 20 points on the back end. We can work from there.${reqNote}`,
+      `Not even close. But I like your studio — let's find a number that works.${reqNote}`,
+      `I've turned down bigger studios for less interesting projects. Make it worth my while.${reqNote}`,
     ];
     const strongMsgs = [
       "You're in the right neighborhood. Here's where I land.",
@@ -1651,7 +1783,7 @@ function buildMovieCard(team, film, fi) {
       dirUsageCount[f.director]++;
     }
   });
-  const availDirs = team.directors.filter(d => dirUsageCount[d.dirIdx] < 2);
+  const availDirs = team.directors.filter(d => dirUsageCount[d.dirIdx] < 1);
 
   // Build star tier options for each slot type
   // Each team has a pool of purchased tiers; each film uses 1 slot from any tier (tracked by slot index)
@@ -1672,7 +1804,7 @@ function buildMovieCard(team, film, fi) {
       const usedCount = used[tier.stars]||0;
       const avail = bought - usedCount;
       const sel = film[filmKey]?.stars === tier.stars ? ' selected' : '';
-      const starStr = '★'.repeat(tier.stars);
+      const starStr = starBadgeText(tier.stars) + ' ';
       const disabled = avail <= 0 && film[filmKey]?.stars !== tier.stars ? ' disabled' : '';
       opts += `<option value="${tier.stars}"${sel}${disabled}>${starStr} ${tier.label} · $${tier.price}M (${avail} avail)</option>`;
     });
@@ -1692,7 +1824,7 @@ function buildMovieCard(team, film, fi) {
   ).join('');
 
   const dirDir = film.director !== null ? G.directorPool[film.director] : null;
-  const starSwatch = (s) => s ? `<span style="font-size:12px;color:var(--gold);">${'★'.repeat(s.stars)}</span>` : `<span style="color:var(--ink5);font-size:11px;">—</span>`;
+  const starSwatch = (s) => s ? starBadge(s.stars, '30px') : `<span style="color:var(--ink5);font-size:11px;">—</span>`;
 
   const titleVal = film.title || '';
 
@@ -1711,8 +1843,7 @@ function buildMovieCard(team, film, fi) {
           availDirs.map(d => {
             const dir = G.directorPool[d.dirIdx];
             const uses = dirUsageCount[d.dirIdx];
-            const dStars = '★'.repeat(dir.stars);
-            return `<option value="${d.dirIdx}"${film.director===d.dirIdx?' selected':''}>${dir.name} ${dStars} · ${uses}/2 films</option>`;
+            return `<option value="${d.dirIdx}"${film.director===d.dirIdx?' selected':''}>${dir.name} ${starBadgeText(dir.stars)}</option>`;
           }).join('')
         }</select>
       </div>
@@ -1755,7 +1886,11 @@ function buildMovieCard(team, film, fi) {
         <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
           <div style="display:flex;align-items:center;justify-content:space-between;">
             <span style="font-size:10px;letter-spacing:0.1em;color:#888;text-transform:uppercase;">Quality</span>
-            <span style="font-size:13px;font-weight:700;color:#111;">avg ★${harmonyScore.avgStars ? harmonyScore.avgStars.toFixed(1) : '—'}</span>
+            <span style="font-size:13px;font-weight:700;color:#111;">${harmonyScore.avgStars ? starBadge(Math.round(harmonyScore.avgStars),'20px') + ' <span style="font-size:10px;color:#aaa;">avg ' + harmonyScore.avgStars.toFixed(1) + '</span>' : '—'}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:10px;letter-spacing:0.1em;color:#888;text-transform:uppercase;">Director</span>
+            ${harmonyScore.mood && harmonyScore.mood.face !== '—' ? `<span style="font-size:13px;" title="${harmonyScore.mood.label}: ${harmonyScore.mood.mood > 0 ? '+' : ''}${harmonyScore.mood.mood.toFixed(1)} quality bonus">${harmonyScore.mood.face} <span style="font-size:11px;font-weight:700;color:${harmonyScore.mood.color};">${harmonyScore.mood.mood > 0 ? '+' : ''}${harmonyScore.mood.mood.toFixed(1)}</span></span>` : '<span style="font-size:12px;color:#aaa;">—</span>'}
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;">
             <span style="font-size:10px;letter-spacing:0.1em;color:#888;text-transform:uppercase;">Marketing</span>
@@ -1766,7 +1901,11 @@ function buildMovieCard(team, film, fi) {
             <span style="font-size:12px;color:#aaa;font-style:italic;">1–100 at release</span>
           </div>
         </div>
-        <div style="font-size:9px;color:#ccc;margin-top:10px;border-top:1px solid #eee;padding-top:6px;">Score = Quality×3 + Marketing×2 + Luck×1</div>
+        ${harmonyScore.mood && harmonyScore.mood.face !== '—' ? `<div style="font-size:9px;margin-top:8px;padding:5px 7px;border-radius:4px;background:${harmonyScore.mood.metCount===2?'#e8f5e9':harmonyScore.mood.metCount===1?'#fffde7':'#fdecea'};color:${harmonyScore.mood.color};">
+          ${harmonyScore.mood.face} Director is ${harmonyScore.mood.label.toLowerCase()}
+          ${harmonyScore.mood.mood !== 0 ? '— ' + (harmonyScore.mood.mood > 0 ? '+' : '') + harmonyScore.mood.mood.toFixed(1) + ' quality bonus' : ''}
+        </div>` : ''}
+        <div style="font-size:9px;color:#ccc;margin-top:8px;border-top:1px solid #eee;padding-top:6px;">Score = Quality×3 + Marketing×2 + Luck×1</div>
       </div>
     </div>
   `;
@@ -1828,29 +1967,23 @@ function computeHarmony(team, film) {
   if(film.cast)   pieces.push(film.cast.stars);
   if(film.crew)   pieces.push(film.crew.stars);
 
-  if(pieces.length === 0) return {matches:0, label:'No pieces assigned', multiplier:0, qualityScore:0, qualityMult:0, desc:'Assign all 4 pieces to score', avgStars:0};
+  if(pieces.length === 0) return {matches:0, label:'No pieces assigned', multiplier:0, qualityScore:0, qualityMult:0, mood:null, desc:'Assign all 4 pieces to score', avgStars:0};
 
   const avg = pieces.reduce((a,b)=>a+b,0) / pieces.length;
   const minS = Math.min(...pieces);
   const maxS = Math.max(...pieces);
 
-  // qualityScore: 0.0 (all ★1) → 1.0 (all ★5)
   const qualityScore = (avg - 1) / 4;
-
-  // BASE: gentler curve so average isn't everything (0.45× to ~2.15×)
-  const base = 0.45 + Math.pow(qualityScore, 0.95) * 1.70;
-
-  // SYNERGY: reward having no weak links — a fully assembled team performs above average
-  // min★3 = +20%, min★4 = +40%, min★5 = +60%
+  const base    = 0.45 + Math.pow(qualityScore, 0.95) * 1.70;
   const synergy = 1.0 + Math.max(0, minS - 2) * 0.20;
+  const spike   = maxS >= 5 ? 1.25 : maxS >= 4 ? 1.10 : 1.0;
+  const baseQuality = base * synergy * spike;
 
-  // SPIKE: reward having at least one genuine star — enables sleeper hits
-  // ★4 piece anywhere = +10%, ★5 piece = +25%
-  const spike = maxS >= 5 ? 1.25 : maxS >= 4 ? 1.10 : 1.0;
+  // Director happiness bonus: +0.5 (thrilled) → 0 (neutral) → -0.5 (unhappy)
+  const dir = (film.director !== null && film.director !== undefined) ? G.directorPool[film.director] : null;
+  const moodData = dir ? checkFilmNonNegotiables(dir, film) : {mood:0, face:'—', label:'', color:'#aaa', metCount:2};
+  const qualityMult = Math.max(0.1, baseQuality + moodData.mood);
 
-  const qualityMult = base * synergy * spike;
-
-  // Label threshold based on final multiplier
   const barScore = qualityMult >= 3.5 ? 4 : qualityMult >= 2.5 ? 3 : qualityMult >= 1.5 ? 2 : qualityMult >= 0.9 ? 1 : 0;
   const labels = {4:'ELITE', 3:'STRONG', 2:'SOLID', 1:'MODEST', 0:'WEAK'};
 
@@ -1860,7 +1993,9 @@ function computeHarmony(team, film) {
     multiplier: qualityMult.toFixed(2),
     qualityScore,
     qualityMult,
-    desc: `Avg ★${avg.toFixed(1)} — director, cast, crew, script`,
+    baseQuality,
+    mood: moodData,
+    desc: `Avg ★${avg.toFixed(1)}`,
     avgStars: avg
   };
 }
@@ -1974,20 +2109,10 @@ function autoAssembleAllFilms() {
       f.crew   = pieces.crew[fi]    || null;
     });
 
-    // Randomly assign directors across films (each director can helm up to 2)
+    // 1 director per film — shuffle and assign one each
     const dirs = [...team.directors];
-    // Shuffle directors
     for(let i=dirs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[dirs[i],dirs[j]]=[dirs[j],dirs[i]];}
-    // Assign: give each director at least 1 film, distribute remainder randomly
-    const dirAssign = [dirs[0]?.dirIdx, dirs[0]?.dirIdx, dirs[1]?.dirIdx]; // default
-    // Randomise which director gets the extra film
-    if(dirs.length >= 2 && Math.random() > 0.5) {
-      dirAssign[1] = dirs[1].dirIdx; // dir1 gets film1, dir0 gets film0, dir2 gets film2 if exists
-    }
-    if(dirs.length >= 3) {
-      dirAssign[2] = dirs[Math.floor(Math.random()*dirs.length)].dirIdx;
-    }
-    team.films.forEach((f, fi) => { f.director = dirAssign[fi] ?? (dirs[0]?.dirIdx ?? null); });
+    team.films.forEach((f, fi) => { f.director = dirs[fi]?.dirIdx ?? null; });
 
     // Randomly assign release windows — each film gets a different window
     // Pick 3 random windows without repeating
@@ -2014,7 +2139,7 @@ function lockAllFilms() {
       if(f.director !== null) dirUsage[f.director] = (dirUsage[f.director]||0) + 1;
     });
     Object.entries(dirUsage).forEach(([idx, count]) => {
-      if(count > 4) problems.push(`${t.name}: ${G.directorPool[idx].name} assigned to ${count} films (max 4)`);
+      if(count > 1) problems.push(`${t.name}: ${G.directorPool[idx].name} is assigned to ${count} films — each director can only helm 1 film`);
     });
     t.films.forEach((f,i) => {
       if((f.director === null || f.director === undefined) || !f.script || !f.cast || !f.crew) problems.push(`${t.name} Film ${i+1}: missing pieces`);
@@ -2065,21 +2190,15 @@ function computeResults() {
 
         // SCORING FORMULA:
         // score = (quality × 3) + (marketing × 2) + (luck × 1)
-        // Each component normalised to a 0–1 scale first, then weighted and summed.
-        //
-        // Quality:   qualityMult ranges ~0.45–4.30 → normalise to 0–1 over that range
-        // Marketing: $0–$200M → normalise to 0–1 (log scale, diminishing returns)
-        // Luck:      pure random 0–1
-        //
-        // Final score is the weighted sum — used proportionally within a window.
+        // Each component normalised to 0–1, then weighted and summed.
 
         const Q_MIN = 0.45, Q_MAX = 4.30;
         const qualityNorm   = Math.max(0, Math.min(1, (qualityMult - Q_MIN) / (Q_MAX - Q_MIN)));
-        const marketingNorm = Math.log(1 + marketing / 30) / Math.log(1 + 200 / 30); // 0 at $0, 1 at $200M
-        const luck          = Math.random(); // 0–1
+        const marketingNorm = Math.log(1 + marketing / 30) / Math.log(1 + 200 / 30);
+        const luck          = Math.random();
 
         const score = (qualityNorm * 3) + (marketingNorm * 2) + (luck * 1);
-        const marketingBoost = marketingNorm; // for display purposes
+        const marketingBoost = marketingNorm; // for display
 
         films.push({
           team: t,
@@ -2435,7 +2554,7 @@ function showSeasonCards(wr, idx) {
         <div style="font-size:10px;font-weight:700;color:${f.team.color};letter-spacing:0.08em;margin-top:2px;">${f.team.name}</div>
       </div>
       <div style="padding:14px 14px 6px;">
-        ${bar('Quality', qNorm, '#B8860B', 'avg ★' + (f.avgStars||0).toFixed(1))}
+        ${bar('Quality', qNorm, '#B8860B', starBadge(Math.round(f.avgStars||1),'16px') + ' avg ' + (f.avgStars||0).toFixed(1))}
         ${bar('Marketing', mNorm, '#1558A0', '$' + (f.budget||0) + 'M')}
         ${bar('Luck', lNorm, '#6B4C9A', Math.round(lNorm*100) + ' / 100')}
       </div>
@@ -2635,7 +2754,7 @@ function finishReveal() {
         </div>
         <div>
           <div class="wfr-label">Quality</div>
-          <div style="font-size:12px;color:#555;margin-top:3px;">avg ★${f.avgStars?f.avgStars.toFixed(1):'—'}</div>
+          <div style="font-size:12px;color:#555;margin-top:3px;display:flex;align-items:center;gap:4px;">${f.avgStars ? starBadge(Math.round(f.avgStars),'16px') : ''}<span>${f.avgStars?f.avgStars.toFixed(1):'—'}</span></div>
         </div>
         <div>
           <div class="wfr-label">Box Office</div>
