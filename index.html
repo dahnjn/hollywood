@@ -2760,29 +2760,33 @@ function finishReveal() {
         f.scriptCost > 0    ? `Script $${f.scriptCost}M`      : '',
         f.budget > 0        ? `Marketing $${f.budget}M`       : '',
       ].filter(Boolean);
-      return `<div class="wr-film-row${isWinner?' winner':''}">
-        <div>
-          <div class="wfr-title">${isWinner?'<span class="crown">👑</span>':''}${title}</div>
+      const moodVal = f.harmony && f.harmony.mood ? f.harmony.mood.mood : 0;
+      const qualDisplay = f.avgStars
+        ? f.avgStars.toFixed(1) + (moodVal !== 0
+            ? ' <span style="font-size:9px;color:' + (moodVal>0?'#1E8449':'#C0392B') + ';">(' + (moodVal>0?'+':'') + moodVal.toFixed(1) + ')</span>'
+            : '')
+        : '—';
+      return `<div class="wr-film-row">
+        <div style="display:flex;flex-direction:column;justify-content:center;">
+          <div class="wfr-title">${title}</div>
           <div class="wfr-studio" style="color:${f.team.color}">${f.team.name}</div>
         </div>
-        <div>
+        <div style="display:flex;flex-direction:column;justify-content:center;">
           <div class="wfr-label">Quality</div>
-          <div style="font-size:12px;color:#555;margin-top:3px;display:flex;align-items:center;gap:4px;">${f.avgStars ? starBadge(Math.round(f.avgStars),'26px') : '<span>—</span>'}</div>
+          <div style="font-size:16px;font-weight:700;color:#111;margin-top:4px;">${qualDisplay}</div>
         </div>
-        <div>
+        <div style="display:flex;flex-direction:column;justify-content:center;">
           <div class="wfr-label">Box Office</div>
-          <div class="wfr-value" style="color:var(--gold);font-size:20px;">$${f.revenue}M</div>
+          <div style="font-size:20px;font-weight:700;color:#1E8449;margin-top:4px;">$${f.revenue}M</div>
         </div>
-        <div>
+        <div style="display:flex;flex-direction:column;justify-content:center;">
           <div class="wfr-label" style="color:#C0392B;">Total Costs</div>
-          <div style="font-size:15px;font-weight:700;color:#C0392B;margin-bottom:4px;">− $${f.totalCosts}M</div>
+          <div style="font-size:16px;font-weight:700;color:#C0392B;margin-top:4px;margin-bottom:4px;">− $${f.totalCosts}M</div>
           <div style="font-size:9px;color:#aaa;line-height:1.7;">${costLines.join('<br>')}</div>
         </div>
-        <div>
-          <div class="wfr-label">&nbsp;</div>
-          <div style="font-size:10px;color:#aaa;margin-bottom:2px;">=</div>
+        <div style="display:flex;flex-direction:column;justify-content:center;">
           <div class="wfr-label">Net Profit</div>
-          <div class="wfr-value" style="font-size:20px;font-weight:700;color:${profitCol};">${f.profit>=0?'+':''}$${f.profit}M</div>
+          <div style="font-size:20px;font-weight:700;color:${profitCol};margin-top:4px;">${f.profit>=0?'+':''}$${f.profit}M</div>
         </div>
       </div>`;
     }).join('');
