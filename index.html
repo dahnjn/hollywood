@@ -679,40 +679,115 @@ input[type=number] { -moz-appearance:textfield; }
 // ════════════════════════════════════════════════════════
 //  GAME DATA
 // ════════════════════════════════════════════════════════
-const COLORS = ['red','orange','yellow','green','blue','purple','grey','black'];
-const COLOR_HEX = {red:'#C0392B',orange:'#D4681A',yellow:'#C8A20A',green:'#1E8449',blue:'#1F6FA3',purple:'#7D3C98',grey:'#7F8C8D',black:'#2a2a2a'};
-const COLOR_LABEL = {red:'R',orange:'O',yellow:'Y',green:'G',blue:'B',purple:'P',grey:'★',black:'✕'};
-// ── STAR TIER SYSTEM ──
-const CAST_TIERS  = [
-  {stars:1, price:8,   label:'Unknowns'},
-  {stars:2, price:12,  label:'Rising Talent'},
-  {stars:3, price:30,  label:'Established Names'},
-  {stars:4, price:55,  label:'A-List Ensemble'},
-  {stars:5, price:90,  label:'Marquee Stars'},
-];
-const CREW_TIERS  = [
-  {stars:1, price:4,   label:'Entry Crew'},
-  {stars:2, price:6,   label:'Journeymen'},
-  {stars:3, price:18,  label:'Skilled Crew'},
-  {stars:4, price:35,  label:'Elite Crew'},
-  {stars:5, price:60,  label:'Award-Winning Crew'},
-];
-const SCRIPT_TIERS = [
-  {stars:1, price:1,   label:'Spec Script'},
-  {stars:2, price:2,   label:'Polished Draft'},
-  {stars:3, price:8,   label:'Proven Writer'},
-  {stars:4, price:18,  label:'WGA Award Finalist'},
-  {stars:5, price:30,  label:'Acclaimed Original'},
-];
-// Supply pool: 3 of each tier per category, shared across all teams
-const SUPPLY_PER_TIER = 4;
-function initSupply() {
+// ── Color system below ──
+// ── Color system ──
+const COLORS = ['red','orange','yellow','green','blue','purple','rainbow'];
+const COLOR_HEX = {
+  red:'#E74C3C', orange:'#E67E22', yellow:'#F1C40F',
+  green:'#27AE60', blue:'#2980B9', purple:'#8E44AD',
+  rainbow:'url(#rainbowGrad)'  // handled specially in rendering
+};
+const COLOR_SOLID = {
+  red:'#E74C3C', orange:'#E67E22', yellow:'#F1C40F',
+  green:'#27AE60', blue:'#2980B9', purple:'#8E44AD',
+  rainbow:'#aaa'
+};
+// Color wheel for harmony (rainbow = distance 0 to everything)
+const WHEEL = ['red','orange','yellow','green','blue','purple'];
+function wheelDist(a, b) {
+  if(a==='rainbow'||b==='rainbow') return 0;
+  if(a===b) return 0;
+  const ai=WHEEL.indexOf(a), bi=WHEEL.indexOf(b);
+  if(ai<0||bi<0) return 3;
+  return Math.min(Math.abs(ai-bi), WHEEL.length-Math.abs(ai-bi));
+}
+function colorHarmony(colors) {
+  const cols = colors.filter(Boolean);
+  if(!cols.length) return 0.5;
+  const pairs = [];
+  for(let i=0;i<cols.length;i++) for(let j=i+1;j<cols.length;j++) pairs.push(wheelDist(cols[i],cols[j]));
+  const avgDist = pairs.length ? pairs.reduce((a,b)=>a+b,0)/pairs.length : 0;
+  return Math.max(0, 1.0 - avgDist/3.0);
+}
+// Harmony bonus to avgStars: perfect match +0.75, clash -0.25
+function harmonyBonus(h) { return Math.round((h - 0.5) * 1.5 * 4) / 4; } // rounded to 0.25
+
+// Color swatch helper
+function colorSwatch(color, size) {
+  size = size || '18px';
+  if(color === 'rainbow') {
+    return `<span style="display:inline-block;width:${size};height:${size};border-radius:3px;background:linear-gradient(135deg,#E74C3C,#E67E22,#F1C40F,#27AE60,#2980B9,#8E44AD);vertical-align:middle;border:1px solid rgba(0,0,0,0.1);" title="Rainbow"></span>`;
+  }
+  return `<span style="display:inline-block;width:${size};height:${size};border-radius:3px;background:${COLOR_SOLID[color]||'#ccc'};vertical-align:middle;border:1px solid rgba(0,0,0,0.15);" title="${color}"></span>`;
+}
+
+// ── Talent card pools (15 cast, 15 crew, 15 scripts — pre-assigned colors) ──
+// Keep as tiers too for backward compat price lookups
+const CAST_TIERS   = [{stars:1,price:8,label:'Unknowns'},{stars:2,price:12,label:'Rising Talent'},{stars:3,price:30,label:'Established Names'},{stars:4,price:55,label:'A-List Ensemble'},{stars:5,price:90,label:'Marquee Stars'}];
+const CREW_TIERS   = [{stars:1,price:4,label:'Entry Crew'},{stars:2,price:6,label:'Journeymen'},{stars:3,price:18,label:'Skilled Crew'},{stars:4,price:35,label:'Elite Crew'},{stars:5,price:60,label:'Award-Winning Crew'}];
+const SCRIPT_TIERS = [{stars:1,price:1,label:'Spec Script'},{stars:2,price:2,label:'Polished Draft'},{stars:3,price:8,label:'Proven Writer'},{stars:4,price:18,label:'WGA Award Finalist'},{stars:5,price:30,label:'Acclaimed Original'}];
+
+function initTalentPool() {
   return {
-    cast:    Array.from({length:5}, (_,i) => ({stars:i+1, remaining:SUPPLY_PER_TIER})),
-    crew:    Array.from({length:5}, (_,i) => ({stars:i+1, remaining:SUPPLY_PER_TIER})),
-    scripts: Array.from({length:5}, (_,i) => ({stars:i+1, remaining:SUPPLY_PER_TIER})),
+    cast:    [
+  {cat:'cast',stars:1,price:8,label:'Unknowns',color:'red',taken:false,takenBy:null},
+  {cat:'cast',stars:5,price:90,label:'Marquee Stars',color:'red',taken:false,takenBy:null},
+  {cat:'cast',stars:4,price:55,label:'A-List Ensemble',color:'purple',taken:false,takenBy:null},
+  {cat:'cast',stars:3,price:30,label:'Established Names',color:'orange',taken:false,takenBy:null},
+  {cat:'cast',stars:2,price:12,label:'Rising Talent',color:'yellow',taken:false,takenBy:null},
+  {cat:'cast',stars:3,price:30,label:'Established Names',color:'orange',taken:false,takenBy:null},
+  {cat:'cast',stars:2,price:12,label:'Rising Talent',color:'orange',taken:false,takenBy:null},
+  {cat:'cast',stars:4,price:55,label:'A-List Ensemble',color:'purple',taken:false,takenBy:null},
+  {cat:'cast',stars:5,price:90,label:'Marquee Stars',color:'blue',taken:false,takenBy:null},
+  {cat:'cast',stars:4,price:55,label:'A-List Ensemble',color:'red',taken:false,takenBy:null},
+  {cat:'cast',stars:3,price:30,label:'Established Names',color:'purple',taken:false,takenBy:null},
+  {cat:'cast',stars:5,price:90,label:'Marquee Stars',color:'blue',taken:false,takenBy:null},
+  {cat:'cast',stars:2,price:12,label:'Rising Talent',color:'purple',taken:false,takenBy:null},
+  {cat:'cast',stars:5,price:90,label:'Marquee Stars',color:'green',taken:false,takenBy:null},
+  {cat:'cast',stars:1,price:8,label:'Unknowns',color:'purple',taken:false,takenBy:null},
+  {cat:'cast',stars:1,price:8,label:'Unknowns',color:'red',taken:false,takenBy:null}
+],
+    crew:    [
+  {cat:'crew',stars:1,price:4,label:'Entry Crew',color:'rainbow',taken:false,takenBy:null},
+  {cat:'crew',stars:5,price:60,label:'Award-Winning Crew',color:'orange',taken:false,takenBy:null},
+  {cat:'crew',stars:5,price:60,label:'Award-Winning Crew',color:'orange',taken:false,takenBy:null},
+  {cat:'crew',stars:3,price:18,label:'Skilled Crew',color:'orange',taken:false,takenBy:null},
+  {cat:'crew',stars:3,price:18,label:'Skilled Crew',color:'purple',taken:false,takenBy:null},
+  {cat:'crew',stars:5,price:60,label:'Award-Winning Crew',color:'yellow',taken:false,takenBy:null},
+  {cat:'crew',stars:4,price:35,label:'Elite Crew',color:'yellow',taken:false,takenBy:null},
+  {cat:'crew',stars:1,price:4,label:'Entry Crew',color:'blue',taken:false,takenBy:null},
+  {cat:'crew',stars:2,price:6,label:'Journeymen',color:'red',taken:false,takenBy:null},
+  {cat:'crew',stars:4,price:35,label:'Elite Crew',color:'green',taken:false,takenBy:null},
+  {cat:'crew',stars:4,price:35,label:'Elite Crew',color:'yellow',taken:false,takenBy:null},
+  {cat:'crew',stars:2,price:6,label:'Journeymen',color:'rainbow',taken:false,takenBy:null},
+  {cat:'crew',stars:5,price:60,label:'Award-Winning Crew',color:'rainbow',taken:false,takenBy:null},
+  {cat:'crew',stars:3,price:18,label:'Skilled Crew',color:'rainbow',taken:false,takenBy:null},
+  {cat:'crew',stars:1,price:4,label:'Entry Crew',color:'yellow',taken:false,takenBy:null},
+  {cat:'crew',stars:2,price:6,label:'Journeymen',color:'rainbow',taken:false,takenBy:null}
+],
+    scripts: [
+  {cat:'scripts',stars:4,price:18,label:'WGA Award Finalist',color:'red',taken:false,takenBy:null},
+  {cat:'scripts',stars:1,price:1,label:'Spec Script',color:'blue',taken:false,takenBy:null},
+  {cat:'scripts',stars:5,price:30,label:'Acclaimed Original',color:'rainbow',taken:false,takenBy:null},
+  {cat:'scripts',stars:3,price:8,label:'Proven Writer',color:'orange',taken:false,takenBy:null},
+  {cat:'scripts',stars:5,price:30,label:'Acclaimed Original',color:'purple',taken:false,takenBy:null},
+  {cat:'scripts',stars:4,price:18,label:'WGA Award Finalist',color:'red',taken:false,takenBy:null},
+  {cat:'scripts',stars:4,price:18,label:'WGA Award Finalist',color:'purple',taken:false,takenBy:null},
+  {cat:'scripts',stars:5,price:30,label:'Acclaimed Original',color:'yellow',taken:false,takenBy:null},
+  {cat:'scripts',stars:2,price:2,label:'Polished Draft',color:'rainbow',taken:false,takenBy:null},
+  {cat:'scripts',stars:3,price:8,label:'Proven Writer',color:'blue',taken:false,takenBy:null},
+  {cat:'scripts',stars:2,price:2,label:'Polished Draft',color:'blue',taken:false,takenBy:null},
+  {cat:'scripts',stars:3,price:8,label:'Proven Writer',color:'yellow',taken:false,takenBy:null},
+  {cat:'scripts',stars:1,price:1,label:'Spec Script',color:'yellow',taken:false,takenBy:null},
+  {cat:'scripts',stars:2,price:2,label:'Polished Draft',color:'purple',taken:false,takenBy:null},
+  {cat:'scripts',stars:5,price:30,label:'Acclaimed Original',color:'orange',taken:false,takenBy:null},
+  {cat:'scripts',stars:1,price:1,label:'Spec Script',color:'rainbow',taken:false,takenBy:null}
+],
   };
 }
+
+// Keep initSupply as alias for compat
+function initSupply() { return initTalentPool(); }
 function starStr(n) { return '★'.repeat(n) + '☆'.repeat(5-n); }
 
 // Compact star badge: star outline with number inside
@@ -721,8 +796,8 @@ function starBadge(n, size) {
   var fontSize = 'calc(' + size + ' * 0.45)';
   return '<span style="display:inline-flex;align-items:center;justify-content:center;width:' + size + ';height:' + size + ';position:relative;vertical-align:middle;" title="' + n + ' stars">'
     + '<svg viewBox="0 0 20 20" width="' + size + '" height="' + size + '" style="position:absolute;">'
-    + '<polygon points="10,1 12.9,7 19.5,7.6 14.8,11.8 16.4,18.2 10,14.5 3.6,18.2 5.2,11.8 0.5,7.6 7.1,7" fill="none" stroke="#B8860B" stroke-width="1.6"/>'
-    + '</svg><span style="position:relative;font-size:' + fontSize + ';font-weight:800;color:#B8860B;line-height:1;">' + n + '</span></span>';
+    + '<polygon points="10,1 12.9,7 19.5,7.6 14.8,11.8 16.4,18.2 10,14.5 3.6,18.2 5.2,11.8 0.5,7.6 7.1,7" fill="none" stroke="#111" stroke-width="1.6"/>'
+    + '</svg><span style="position:relative;font-size:' + fontSize + ';font-weight:800;color:#111;line-height:1;">' + n + '</span></span>';
 }
 // Text-only version for <option> elements
 function starBadgeText(n) { return '\u2605' + n; }
@@ -748,46 +823,46 @@ const HARMONY_MULTIPLIER = {4:3.0, 3:2.0, 2:1.4, 1:0.8, 0:0.4};
 // cat: 'cast'|'crew'|'script'  minStars: minimum tier required
 const DIRECTOR_POOL = [
   // ★★★★★ — Elite: both requirements are demanding (★4–5 thresholds)
-  {name:"Daria Morel",    photo:"dir-04.jpg", minFee:24, minPct:10, stars:5,
+  {name:"Daria Morel",    photo:"dir-04.jpg", minFee:24, minPct:10, stars:5, color:"red",
    reqs:[{cat:'cast',  minStars:5, label:'★5 Cast'},     {cat:'script', minStars:4, label:'★4 Script'}]},
-  {name:"Yael Okonjo",    photo:"dir-09.jpg", minFee:21, minPct:0,  stars:5,
+  {name:"Yael Okonjo",    photo:"dir-09.jpg", minFee:21, minPct:0,  stars:5, color:"yellow",
    reqs:[{cat:'cast',  minStars:5, label:'★5 Cast'},     {cat:'crew',   minStars:4, label:'★4 Crew'}]},
-  {name:"Lena Zhao",      photo:"dir-06.jpg", minFee:1,  minPct:1,  stars:1,
+  {name:"Lena Zhao",      photo:"dir-06.jpg", minFee:1,  minPct:1,  stars:1, color:"orange",
    reqs:[{cat:'script',minStars:2, label:'★2 Script'},      {cat:'crew',   minStars:1, label:'★1 Crew'}]},
-  {name:"Marcus Lund",    photo:"dir-02.jpg", minFee:1,  minPct:1,  stars:1,
+  {name:"Marcus Lund",    photo:"dir-02.jpg", minFee:1,  minPct:1,  stars:1, color:"blue",
    reqs:[{cat:'script',minStars:2, label:'★2 Script'},      {cat:'cast',   minStars:1, label:'★1 Cast'}]},
   // ★★★★ — Established: one high req (★4+), one moderate (★3+)
-  {name:"Vera Okafor",    photo:"dir-01.jpg", minFee:14, minPct:6,  stars:4,
+  {name:"Vera Okafor",    photo:"dir-01.jpg", minFee:14, minPct:6,  stars:4, color:"purple",
    reqs:[{cat:'cast',  minStars:4, label:'★4 Cast'},     {cat:'crew',   minStars:3, label:'★3 Crew'}]},
-  {name:"Petra Hamm",     photo:"dir-07.jpg", minFee:12, minPct:5,  stars:4,
+  {name:"Petra Hamm",     photo:"dir-07.jpg", minFee:12, minPct:5,  stars:4, color:"green",
    reqs:[{cat:'script',minStars:4, label:'★4 Script'},   {cat:'cast',   minStars:3, label:'★3 Cast'}]},
-  {name:"Bo Sung",        photo:"dir-11.jpg", minFee:13, minPct:5,  stars:4,
+  {name:"Bo Sung",        photo:"dir-11.jpg", minFee:13, minPct:5,  stars:4, color:"blue",
    reqs:[{cat:'crew',  minStars:4, label:'★4 Crew'},     {cat:'script', minStars:3, label:'★3 Script'}]},
-  {name:"River Castillo", photo:"dir-08.jpg", minFee:11, minPct:4,  stars:4,
+  {name:"River Castillo", photo:"dir-08.jpg", minFee:11, minPct:4,  stars:4, color:"red",
    reqs:[{cat:'script',minStars:4, label:'★4 Script'},   {cat:'crew',   minStars:3, label:'★3 Crew'}]},
   // ★★★ — Mid-tier: both requirements are moderate (★3)
-  {name:"Cole Whitmore",  photo:"dir-03.jpg", minFee:9,  minPct:4,  stars:3,
+  {name:"Cole Whitmore",  photo:"dir-03.jpg", minFee:9,  minPct:4,  stars:3, color:"orange",
    reqs:[{cat:'cast',  minStars:3, label:'★3 Cast'},      {cat:'script', minStars:3, label:'★3 Script'}]},
-  {name:"Sam Eriksen",    photo:"dir-10.jpg", minFee:7,  minPct:0,  stars:3,
+  {name:"Sam Eriksen",    photo:"dir-10.jpg", minFee:7,  minPct:0,  stars:3, color:"green",
    reqs:[{cat:'cast',  minStars:3, label:'★3 Cast'},      {cat:'crew',   minStars:3, label:'★3 Crew'}]},
   // ★★ — Hungry: easy requirements (★2)
-  {name:"Tobias Rhenn",   photo:"dir-05.jpg", minFee:5,  minPct:3,  stars:2,
+  {name:"Tobias Rhenn",   photo:"dir-05.jpg", minFee:5,  minPct:3,  stars:2, color:"yellow",
    reqs:[{cat:'cast',  minStars:2, label:'★2 Cast'},       {cat:'crew',   minStars:2, label:'★2 Crew'}]},
-  {name:"Freya Holt",     photo:"dir-12.jpg", minFee:4,  minPct:2,  stars:2,
+  {name:"Freya Holt",     photo:"dir-12.jpg", minFee:4,  minPct:2,  stars:2, color:"purple",
    reqs:[{cat:'crew',  minStars:2, label:'★2 Crew'},       {cat:'script', minStars:2, label:'★2 Script'}]},
   // ★★★★★ — New elite directors (dir-13 through dir-15)
-  {name:"Reza Shirazi",   photo:"dir-13.jpg", minFee:23, minPct:9,  stars:5,
+  {name:"Reza Shirazi",   photo:"dir-13.jpg", minFee:23, minPct:9,  stars:5, color:"green",
    reqs:[{cat:'script',minStars:5, label:'★5 Script'},  {cat:'crew',   minStars:4, label:'★4 Crew'}]},
-  {name:"Nia Adeyemi",    photo:"dir-14.jpg", minFee:22, minPct:8,  stars:5,
+  {name:"Nia Adeyemi",    photo:"dir-14.jpg", minFee:22, minPct:8,  stars:5, color:"rainbow",
    reqs:[{cat:'cast',  minStars:4, label:'★4 Cast'},     {cat:'script', minStars:5, label:'★5 Script'}]},
-  {name:"Soren Vance",    photo:"dir-15.jpg", minFee:20, minPct:9,  stars:5,
+  {name:"Soren Vance",    photo:"dir-15.jpg", minFee:20, minPct:9,  stars:5, color:"blue",
    reqs:[{cat:'crew',  minStars:5, label:'★5 Crew'},    {cat:'cast',   minStars:4, label:'★4 Cast'}]},
   // ★★★ — New mid-tier directors (dir-16 through dir-18)
-  {name:"Malia Fonoti",   photo:"dir-16.jpg", minFee:10, minPct:3,  stars:3,
+  {name:"Malia Fonoti",   photo:"dir-16.jpg", minFee:10, minPct:3,  stars:3, color:"red",
    reqs:[{cat:'script',minStars:3, label:'★3 Script'},    {cat:'cast',   minStars:2, label:'★2 Cast'}]},
-  {name:"Dev Anand",      photo:"dir-17.jpg", minFee:8,  minPct:4,  stars:3,
+  {name:"Dev Anand",      photo:"dir-17.jpg", minFee:8,  minPct:4,  stars:3, color:"orange",
    reqs:[{cat:'crew',  minStars:3, label:'★3 Crew'},      {cat:'cast',   minStars:2, label:'★2 Cast'}]},
-  {name:"Zara Osei",      photo:"dir-18.jpg", minFee:9,  minPct:3,  stars:3,
+  {name:"Zara Osei",      photo:"dir-18.jpg", minFee:9,  minPct:3,  stars:3, color:"yellow",
    reqs:[{cat:'cast',  minStars:3, label:'★3 Cast'},      {cat:'script', minStars:2, label:'★2 Script'}]},
 ];
 
@@ -838,12 +913,30 @@ function checkFilmNonNegotiables(dir, film) {
 //  GAME STATE
 // ════════════════════════════════════════════════════════
 
-const SCIFI_ADJ = ['Stellar','Void','Crimson','Neon','Iron','Fractured','Last','Dark','Silent','Zero','Pale','Ghost','Quantum','Binary','Hollow','Ember','Signal','Distant','Deep','Broken','Final','Lost','Rogue','Orbital','Frozen'];
-const SCIFI_NOUN = ['Protocol','Meridian','Horizon','Array','Cascade','Drift','Echo','Exodus','Colony','Archive','Rift','Veil','Pulse','Storm','Frequency','Circuit','Vector','Epoch','Orbit','Gravity','Axiom','Sequence','Prism','Threshold','Lattice'];
+// Fixed film titles — 12 curated titles, one per film slot
+// Poster images: posters/poster-crimson-horizon.jpg etc (upload to GitHub)
+const FILM_TITLES = [
+  'Crimson Horizon',
+  'Void Protocol',
+  'Ghost Frequency',
+  'Iron Exodus',
+  'Stellar Rift',
+  'Dark Lattice',
+  'Pale Echo',
+  'Signal Storm',
+  'Quantum Veil',
+  'Fractured Orbit',
+  'Last Archive',
+  'Zero Meridian',
+];
+let _titlePool = [...FILM_TITLES];
 function genScifiTitle() {
-  const a = SCIFI_ADJ[Math.floor(Math.random()*SCIFI_ADJ.length)];
-  const n = SCIFI_NOUN[Math.floor(Math.random()*SCIFI_NOUN.length)];
-  return a + ' ' + n;
+  if(_titlePool.length === 0) _titlePool = [...FILM_TITLES]; // refill if exhausted
+  const idx = Math.floor(Math.random() * _titlePool.length);
+  return _titlePool.splice(idx, 1)[0]; // pick without repeat
+}
+function titleToFilename(title) {
+  return 'posters/poster-' + title.toLowerCase().replace(/\s+/g,'-') + '.jpg';
 }
 
 const TEAM_COLORS_CSS = ['#D4574A','#D4874A','#4A9D7A','#4A7AD4','#C8A20A','#9B59B6'];
@@ -860,6 +953,7 @@ function initState(names) {
         cast:    Array.from({length:5}, (_,i) => ({stars:i+1, qty:0, tier:CAST_TIERS[i]})),
         crew:    Array.from({length:5}, (_,i) => ({stars:i+1, qty:0, tier:CREW_TIERS[i]})),
       },
+      picks: {cast:[], crew:[], scripts:[]}, // array of card indices picked
       directors: [],     // {dirIdx, flatFee, pct}
       films: Array.from({length:3}, () => ({
         title: genScifiTitle(),
@@ -876,7 +970,7 @@ function initState(names) {
     phase: 'draft',
     draftTurn: 0,            // team index whose turn it is to purchase
     draftDone: false,        // true when all teams have 9 pieces
-    supply: initSupply(),    // shared supply pool
+    supply: initTalentPool(), // 45 individual colored talent cards
     dirTurn: 0,
     selectedDir: null,
     currentDirIdx: 0,
@@ -989,79 +1083,94 @@ function renderDraftMarket() {
   const isDone = teamTotalSlots(team) >= 9;
 
   const cats = [
-    {key:'cast',    label:'CAST',    icon:'🎭', tiers:CAST_TIERS},
-    {key:'crew',    label:'CREW',    icon:'⚙️', tiers:CREW_TIERS},
-    {key:'scripts', label:'SCRIPTS', icon:'📄', tiers:SCRIPT_TIERS},
+    {key:'cast',    label:'CAST',    icon:'🎭'},
+    {key:'crew',    label:'CREW',    icon:'⚙️'},
+    {key:'scripts', label:'SCRIPTS', icon:'📄'},
   ];
 
-  market.innerHTML = `<div style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#aaa;margin-bottom:12px;">
-    ${isDone ? `<span style="color:#1E8449;font-weight:700;">✓ ${team.name} is fully stocked — waiting for other teams</span>` : `${team.name}'s pick — choose one slot to fill`}
+  let html = `<div style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#aaa;margin-bottom:16px;">
+    ${isDone
+      ? `<span style="color:#1E8449;font-weight:700;">✓ ${team.name} is fully stocked</span>`
+      : `<strong style="color:${team.color}">${team.name}</strong> — pick one card`}
   </div>`;
 
   cats.forEach(cat => {
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:10px;';
+    const filled = teamSlotCount(team, cat.key);
+    const catFull = filled >= 3;
+    html += `<div style="margin-bottom:20px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.1em;color:#333;margin-bottom:10px;">
+        ${cat.icon} ${cat.label} <span style="font-size:12px;color:${catFull?'#1E8449':'#aaa'};font-family:'Barlow',sans-serif;">${filled}/3 filled</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;">`;
 
-    const catLabel = document.createElement('div');
-    catLabel.style.cssText = 'width:80px;flex-shrink:0;';
-    catLabel.innerHTML = `<div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:0.1em;color:#555;">${cat.icon} ${cat.label}</div>
-      <div style="font-size:10px;color:#aaa;">${teamSlotCount(team, cat.key)}/3 filled</div>`;
-    row.appendChild(catLabel);
+    // Sort cards by stars descending for display
+    const sortedCards = G.supply[cat.key]
+      .map((card, ci) => ({card, ci}))
+      .sort((a, b) => b.card.stars - a.card.stars);
+    sortedCards.forEach(({card, ci}) => {
+      const available = !card.taken && !catFull && !isDone;
+      const takenTeam = card.takenBy !== null ? G.teams.find(t=>t.id===card.takenBy) : null;
 
-    const tiles = document.createElement('div');
-    tiles.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;';
+      // Color rendering
+      const isRainbow = card.color === 'rainbow';
+      const cardBg = isRainbow
+        ? 'linear-gradient(135deg,#E74C3C,#E67E22,#F1C40F,#27AE60,#2980B9,#8E44AD)'
+        : COLOR_SOLID[card.color] || '#ccc';
+      const textCol = isRainbow || ['blue','purple','red','green'].includes(card.color) ? '#fff' : '#111';
 
-    cat.tiers.forEach((tier, i) => {
-      const supply = G.supply[cat.key][i];
-      const purchased = team.purchases[cat.key][i].qty;
-      const remaining = supply.remaining;
-      const catFull   = teamSlotCount(team, cat.key) >= 3;
-      const canAfford = true; // no budget limit
-      const available = remaining > 0 && !catFull && !isDone;
-
-      const tile = document.createElement('div');
-      const stars = '★'.repeat(tier.stars);
-      tile.style.cssText = `width:80px;border:2px solid ${available ? '#1558A0' : '#e0e0e0'};border-radius:7px;padding:8px 6px;text-align:center;
-        background:${available ? '#fff' : '#f9f9f9'};cursor:${available ? 'pointer' : 'default'};
-        opacity:${remaining === 0 ? 0.4 : catFull || isDone ? 0.5 : 1};
-        transition:box-shadow 0.1s;position:relative;`;
-
-      if(available) {
-        tile.onmouseenter = () => tile.style.boxShadow = '0 2px 8px rgba(21,88,160,0.25)';
-        tile.onmouseleave = () => tile.style.boxShadow = '';
-        tile.onclick = () => draftPick(cat.key, i);
-      }
-
-      const soldOut = remaining === 0;
-      tile.innerHTML = `
-        <div style="display:flex;justify-content:center;margin-bottom:2px;">${stars}</div>
-        <div style="font-size:9px;color:#777;margin:2px 0;">${tier.label}</div>
-        <div style="font-size:13px;font-weight:700;color:#111;">$${tier.price}M</div>
-        <div style="font-size:9px;color:${remaining<=1?'#C0392B':'#888'};margin-top:3px;">${soldOut ? 'SOLD OUT' : remaining + ' left'}</div>
-        ${purchased > 0 ? `<div style="position:absolute;top:-6px;right:-6px;background:${team.color};color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center;">${purchased}</div>` : ''}
-      `;
-      tiles.appendChild(tile);
+      html += `<div
+        onclick="${available ? `draftPickCard('${cat.key}',${ci})` : ''}"
+        style="width:90px;border-radius:10px;overflow:hidden;cursor:${available?'pointer':'default'};
+          opacity:${card.taken ? 0.35 : catFull||isDone ? 0.5 : 1};
+          box-shadow:${available?'0 2px 8px rgba(0,0,0,0.12)':'none'};
+          transition:transform 0.1s,box-shadow 0.1s;
+          position:relative;"
+        onmouseenter="this.style.transform='${available?'translateY(-3px)':'none'}';this.style.boxShadow='${available?'0 6px 16px rgba(0,0,0,0.2)':'none'}'"
+        onmouseleave="this.style.transform='none';this.style.boxShadow='${available?'0 2px 8px rgba(0,0,0,0.12)':'none'}'">
+        <!-- Color header -->
+        <div style="background:${cardBg};padding:10px 6px 8px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;color:${textCol};letter-spacing:0.12em;text-transform:uppercase;">
+            ${card.color.toUpperCase()}
+          </div>
+          <div style="margin-top:4px;">${starBadge(card.stars,'22px')}</div>
+        </div>
+        <!-- Card body -->
+        <div style="background:#fff;border:2px solid ${card.taken?'#eee':available?cardBg.includes('gradient')?'#aaa':cardBg:'#e0e0e0'};border-top:none;border-radius:0 0 10px 10px;padding:6px;text-align:center;">
+          <div style="font-size:8px;color:#777;margin-bottom:3px;">${card.label}</div>
+          <div style="font-size:13px;font-weight:700;color:#111;">$${card.price}M</div>
+          ${card.taken && takenTeam ? `<div style="font-size:8px;color:${takenTeam.color};margin-top:2px;">▶ ${takenTeam.name}</div>` : ''}
+        </div>
+      </div>`;
     });
 
-    row.appendChild(tiles);
-    market.appendChild(row);
+    html += `</div></div>`;
   });
+
+  market.innerHTML = html;
 }
 
-function draftPick(type, tierIdx) {
-  const team = G.teams[G.draftTurn];
-  const tiers = type==='cast'?CAST_TIERS:type==='crew'?CREW_TIERS:SCRIPT_TIERS;
-  const tier = tiers[tierIdx];
-  const supply = G.supply[type][tierIdx];
+function draftPick(type, tierIdx) { draftPickCard(type, tierIdx); } // compat alias
 
-  if(supply.remaining <= 0) { toast('Sold out!'); return; }
+function draftPickCard(type, cardIdx) {
+  const team = G.teams[G.draftTurn];
+  const card = G.supply[type][cardIdx];
+
+  if(!card || card.taken) { toast('Already taken!'); return; }
   if(teamSlotCount(team, type) >= 3) { toast(`Already have 3 ${type}`); return; }
   if(teamTotalSlots(team) >= 9) { toast('Already fully stocked'); return; }
 
-  // Make the purchase
-  supply.remaining--;
-  team.purchases[type][tierIdx].qty++;
-  toast(`${team.name} picked ${tier.label} (★${tier.stars}) ${type} for $${tier.price}M`);
+  // Mark card taken
+  card.taken = true;
+  card.takenBy = team.id;
+
+  // Update purchases (for backward compat with teamSpend etc)
+  const tier = (type==='cast'?CAST_TIERS:type==='crew'?CREW_TIERS:SCRIPT_TIERS)[card.stars-1];
+  team.purchases[type][card.stars-1].qty++;
+  // Also track the actual card index in picks
+  if(!team.picks) team.picks = {cast:[],crew:[],scripts:[]};
+  team.picks[type].push(cardIdx);
+
+  toast(`${team.name} picked ${card.color.toUpperCase()} ${card.label} ★${card.stars} for $${card.price}M`);
 
   // Advance to next team that still needs picks
   advanceDraftTurn();
@@ -1158,61 +1267,83 @@ function autoAssignDraft() {
     ['cast','crew','scripts'].forEach(type => {
       team.purchases[type].forEach(p => { p.qty = 0; });
     });
+    team.picks = {cast:[], crew:[], scripts:[]};
   });
 
-  // Assign each team a distinct strategy so simulations vary
-  // Strategies differ in: which tier they target, which category they prioritise
-  const strategies = [
-    // 0: Prestige — go high stars (★4-5) in one category, scrimp elsewhere
-    { name:'Prestige Cast',   catPriority:['cast','crew','scripts'],   tierPref:[4,3,2,1,0] },
-    // 1: Cheap & Lucky — all low stars, save everything for marketing
-    { name:'Budget Blitz',    catPriority:['scripts','crew','cast'],   tierPref:[0,1,2,3,4] },
-    // 2: Balanced mid — steady ★3 across the board
-    { name:'Balanced',        catPriority:['cast','crew','scripts'],   tierPref:[2,3,1,4,0] },
-    // 3: Script-led — chase great scripts first, fill rest cheaply
-    { name:'Script Focus',    catPriority:['scripts','cast','crew'],   tierPref:[3,4,2,1,0] },
+  // 8 genuinely distinct strategies — each run 4 are randomly chosen
+  // tierPref = star indices to try in order (0=★1 ... 4=★5)
+  const ALL_STRATEGIES = [
+    // Go big on cast, cheap everything else
+    { name:"Star Power",      catPriority:['cast','crew','scripts'],   tierPref:[4,3,2,1,0] },
+    // All cheap — bet on luck and marketing
+    { name:"Scrappy",         catPriority:['scripts','crew','cast'],   tierPref:[0,1,2,3,4] },
+    // Solid ★3 across the board
+    { name:"Balanced",        catPriority:['cast','scripts','crew'],   tierPref:[2,1,3,0,4] },
+    // Chase great scripts above all else, then crew, cast last
+    { name:"Writers Room",  catPriority:["scripts","crew","cast"],   tierPref:[4,3,2,1,0] },
+    // Crew obsessed — technical excellence
+    { name:"Craftsmen",       catPriority:['crew','scripts','cast'],   tierPref:[4,3,2,1,0] },
+    // Mid-high mix: two ★4, one ★2 per category
+    { name:"Two-Star Split",  catPriority:['cast','crew','scripts'],   tierPref:[3,4,1,2,0] },
+    // All ★5 where possible, nothing else matters
+    { name:"Swing for Fences",catPriority:['cast','scripts','crew'],   tierPref:[4,3,2,1,0] },
+    // Rock-bottom budget — pure ★1 everything
+    { name:"Micro Budget",    catPriority:['scripts','crew','cast'],   tierPref:[0,1,2,3,4] },
   ];
 
-  // Shuffle which strategy each team gets so it's random each run
-  const shuffled = strategies.map((s,i)=>i).sort(()=>Math.random()-0.5);
-  G.teams.forEach((team,i) => { team._strategy = strategies[shuffled[i]]; });
+  // Pick 4 distinct strategies randomly, no repeats
+  const shuffled = [...ALL_STRATEGIES].sort(() => Math.random() - 0.5).slice(0, 4);
+  // Add slight randomness within each strategy so two "Balanced" teams still diverge
+  G.teams.forEach((team, i) => {
+    const s = {...shuffled[i]};
+    // Randomly swap one tier preference position to introduce variation
+    if(Math.random() > 0.5) {
+      const a = Math.floor(Math.random()*5), b = Math.floor(Math.random()*5);
+      [s.tierPref[a], s.tierPref[b]] = [s.tierPref[b], s.tierPref[a]];
+    }
+    team._strategy = s;
+  });
 
-  let safety = 300;
+  function pickCard(team, cat) {
+    const strat = team._strategy;
+    for(const ti of strat.tierPref) {
+      const cardIdx = G.supply[cat].findIndex(c => !c.taken && c.stars === ti+1);
+      if(cardIdx >= 0) {
+        const card = G.supply[cat][cardIdx];
+        card.taken = true;
+        card.takenBy = team.id;
+        team.purchases[cat][ti].qty++;
+        team.picks[cat].push(cardIdx);
+        return true;
+      }
+    }
+    // Absolute fallback: any untaken card
+    const anyIdx = G.supply[cat].findIndex(c => !c.taken);
+    if(anyIdx >= 0) {
+      const card = G.supply[cat][anyIdx];
+      const ti = card.stars - 1;
+      card.taken = true;
+      card.takenBy = team.id;
+      team.purchases[cat][ti].qty++;
+      team.picks[cat].push(anyIdx);
+      return true;
+    }
+    return false;
+  }
+
+  let safety = 400;
   while(safety-- > 0 && !G.teams.every(t => teamTotalSlots(t) >= 9)) {
     const team = G.teams[G.draftTurn];
     if(teamTotalSlots(team) >= 9) { advanceDraftTurnSilent(); continue; }
 
-    const strat = team._strategy || strategies[0];
-    // Pick most-needed category in strategy's preferred order
-    const needsCat = strat.catPriority.filter(c => teamSlotCount(team,c) < 3);
+    const strat = team._strategy;
+    // Most-needed category first (fewest filled), broken by strategy priority
+    const cats = strat.catPriority.filter(c => teamSlotCount(team, c) < 3);
+    cats.sort((a,b) => teamSlotCount(team,a) - teamSlotCount(team,b));
 
     let picked = false;
-    for(const cat of needsCat) {
-      const tiers = cat==='cast'?CAST_TIERS:cat==='crew'?CREW_TIERS:SCRIPT_TIERS;
-      // Try tiers in strategy's preferred order
-      for(const ti of strat.tierPref) {
-        if(G.supply[cat][ti].remaining > 0) {
-          G.supply[cat][ti].remaining--;
-          team.purchases[cat][ti].qty++;
-          picked = true;
-          break;
-        }
-      }
-      if(picked) break;
-    }
-    // Fallback: take anything available
-    if(!picked) {
-      outer: for(const cat of ['cast','crew','scripts']) {
-        if(teamSlotCount(team,cat) >= 3) continue;
-        for(let ti=0;ti<5;ti++) {
-          if(G.supply[cat][ti].remaining > 0) {
-            G.supply[cat][ti].remaining--;
-            team.purchases[cat][ti].qty++;
-            picked = true;
-            break outer;
-          }
-        }
-      }
+    for(const cat of cats) {
+      if(pickCard(team, cat)) { picked = true; break; }
     }
     if(!picked) break;
     advanceDraftTurnSilent();
@@ -1220,8 +1351,8 @@ function autoAssignDraft() {
 
   G.draftTurn = 0;
   renderDraft();
-  const names = G.teams.map(t => `${t.name}: ${t._strategy ? t._strategy.name : '—'}`).join(' · ');
-  toast('⚡ Auto-drafted — ' + names);
+  const names = G.teams.map(t => `${t.name}: ${t._strategy.name}`).join(' · ');
+  toast('⚡ ' + names);
 }
 
 function advanceDraftTurnSilent() {
@@ -1301,10 +1432,13 @@ function renderDirRoster() {
   function section(title, list, dimmed) {
     if(!list.length) return;
     const hdr = document.createElement('div');
-    hdr.style.cssText = 'font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#aaa;margin:16px 0 8px;font-family:"Barlow",sans-serif;';
+    hdr.style.cssText = 'font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:#aaa;margin:14px 0 8px;font-family:"Barlow",sans-serif;';
     hdr.textContent = title;
     roster.appendChild(hdr);
-    list.forEach(d => roster.appendChild(buildRosterCard(d._i, dimmed)));
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:10px;';
+    list.forEach(d => grid.appendChild(buildRosterCard(d._i, dimmed)));
+    roster.appendChild(grid);
   }
 
   section('Available Directors', available, false);
@@ -1328,45 +1462,55 @@ function buildRosterCard(idx, dimmed) {
   const div = document.createElement('div');
   div.id = `roster-card-${idx}`;
 
-  const borderColor = isSelected ? '#1558A0' : signed ? '#ccc' : '#e0e0e0';
-  const bg = isSelected ? '#EBF2FB' : signed ? '#fafafa' : '#fff';
-  div.style.cssText = `display:flex;gap:12px;align-items:center;background:${bg};border:2px solid ${borderColor};border-radius:8px;padding:12px;margin-bottom:8px;cursor:${isClickable && !alreadyFull ? 'pointer' : 'default'};opacity:${dimmed ? 0.5 : 1};transition:border-color 0.15s,background 0.15s;`;
+  // Compact gallery card
+  const CARD_W = 130;
+  div.style.cssText = `width:${CARD_W}px;border-radius:8px;overflow:hidden;cursor:${isClickable&&!alreadyFull?'pointer':'default'};opacity:${dimmed?0.45:1};border:2px solid ${isSelected?'#1558A0':'transparent'};box-shadow:0 1px 6px rgba(0,0,0,0.10);transition:transform 0.1s,box-shadow 0.1s;flex-shrink:0;`;
 
   if(isClickable && !alreadyFull) {
     div.onclick = () => selectDirector(idx);
+    div.onmouseenter = () => { div.style.transform='translateY(-2px)'; div.style.boxShadow='0 4px 14px rgba(0,0,0,0.18)'; };
+    div.onmouseleave = () => { div.style.transform=''; div.style.boxShadow='0 1px 6px rgba(0,0,0,0.10)'; };
   }
 
   const photoSrc = `photos/${dir.photo}`;
-  const dirStars = starBadge(dir.stars, '36px');
+  const dirColorHex = dir.color === 'rainbow'
+    ? 'linear-gradient(135deg,#E74C3C,#E67E22,#F1C40F,#27AE60,#2980B9,#8E44AD)'
+    : (COLOR_SOLID[dir.color] || '#ccc');
+  const isLight = dir.color && ['yellow','orange'].includes(dir.color);
+  const textCol = isLight ? '#111' : '#fff';
 
-  const prefHtml = ''; // removed — not shown to players
-
-  let statusHtml = '';
-  if(signed) {
-    const sTeam = G.teams.find(t => t.id === dir.signedBy);
-    statusHtml = `<div style="font-size:11px;color:#888;margin-top:4px;">✓ ${sTeam ? sTeam.name : '?'} · $${dir.dealFee}M + ${dir.dealPct}%</div>`;
-  } else if(passed) {
-    statusHtml = `<div style="font-size:11px;color:#C0392B;margin-top:4px;">No deal reached</div>`;
-  } else if(!alreadyFull) {
+  // Non-negotiables compact
+  let nnHtml = '';
+  if(!signed && !passed && !alreadyFull) {
     const nn = checkNonNegotiables(dir, G.teams[G.dirTurn]);
-    const nnHtml = dir.reqs ? dir.reqs.map((r,i) => {
+    nnHtml = dir.reqs ? dir.reqs.map((r,i) => {
       const ok = nn.met[i];
-      return `<span style="font-size:9px;padding:1px 5px;border-radius:3px;margin-right:3px;margin-top:2px;display:inline-block;
-        background:${ok?'#e8f5e9':'#fdecea'};color:${ok?'#1E8449':'#C0392B'};">${r.label}${ok?' ✓':' ✗'}</span>`;
+      return `<div style="font-size:8px;padding:1px 4px;border-radius:2px;margin-bottom:2px;background:${ok?'#e8f5e9':'#fdecea'};color:${ok?'#1E8449':'#C0392B'};">${r.label} ${ok?'✓':'✗'}</div>`;
     }).join('') : '';
-    statusHtml = `<div style="margin-top:5px;">${nnHtml}<div style="font-size:10px;color:#1558A0;margin-top:4px;font-style:italic;">Click to make an offer</div></div>`;
+  }
+
+  let footer = '';
+  if(signed) {
+    const sTeam = G.teams.find(t=>t.id===dir.signedBy);
+    footer = `<div style="font-size:8px;color:#1E8449;font-weight:700;">✓ ${sTeam?sTeam.name:'?'}</div>`;
+  } else if(passed) {
+    footer = `<div style="font-size:8px;color:#C0392B;">No deal</div>`;
+  } else if(!alreadyFull) {
+    footer = `<div style="font-size:8px;color:#1558A0;font-style:italic;">Tap to offer</div>`;
   }
 
   div.innerHTML = `
-    <img src="${photoSrc}" alt="${dir.name}"
-      style="width:56px;height:56px;border-radius:50%;object-fit:cover;object-position:center top;border:2px solid #e0e0e0;flex-shrink:0;"
-      onerror="this.style.display='none'">
-    <div style="flex:1;min-width:0;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:0.05em;color:#111;">${dir.name}</div>
-      <div style="font-size:13px;color:var(--gold);">${dirStars}</div>
-      ${statusHtml}
+    <div style="background:${dirColorHex};height:70px;display:flex;align-items:center;justify-content:center;position:relative;">
+      <img src="${photoSrc}" alt="${dir.name}"
+        style="width:52px;height:52px;border-radius:50%;object-fit:cover;object-position:center top;border:2px solid rgba(255,255,255,0.6);"
+        onerror="this.style.display='none'">
     </div>
-
+    <div style="background:#fff;padding:6px 8px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:0.04em;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${dir.name}</div>
+      <div style="margin:2px 0 4px;">${starBadge(dir.stars,'20px')}</div>
+      ${nnHtml}
+      ${footer}
+    </div>
   `;
   return div;
 }
@@ -1788,32 +1932,45 @@ function buildMovieCard(team, film, fi) {
   // Build star tier options for each slot type
   // Each team has a pool of purchased tiers; each film uses 1 slot from any tier (tracked by slot index)
   // Films store: {type:'cast', stars:3} etc.
-  function tierOptions(type, filmKey, tiers) {
-    const purchased = team.purchases[type];
-    // Count how many of each tier are used by other films
-    const used = {};
-    team.films.forEach((f,i) => {
-      if(i !== fi && f[filmKey] !== null) {
-        const k = f[filmKey].stars;
-        used[k] = (used[k]||0) + 1;
+  // Build options showing each individual picked card with its color
+  function cardOptions(type, filmKey) {
+    const catPicks = team.picks && team.picks[type] ? team.picks[type] : [];
+    // Track which card indices are used by other films
+    const usedCardIndices = new Set();
+    team.films.forEach((f, i) => {
+      if(i !== fi && f[filmKey] && f[filmKey]._cardIdx !== undefined) {
+        usedCardIndices.add(f[filmKey]._cardIdx);
       }
     });
     let opts = `<option value="">— choose —</option>`;
-    tiers.forEach(tier => {
-      const bought = purchased[tier.stars-1].qty;
-      const usedCount = used[tier.stars]||0;
-      const avail = bought - usedCount;
-      const sel = film[filmKey]?.stars === tier.stars ? ' selected' : '';
-      const starStr = starBadgeText(tier.stars) + ' ';
-      const disabled = avail <= 0 && film[filmKey]?.stars !== tier.stars ? ' disabled' : '';
-      opts += `<option value="${tier.stars}"${sel}${disabled}>${starStr} ${tier.label} · $${tier.price}M (${avail} avail)</option>`;
+    catPicks.forEach((cardIdx) => {
+      const card = G.supply[type][cardIdx];
+      if(!card) return;
+      const isUsed = usedCardIndices.has(cardIdx);
+      const isSel  = film[filmKey]?._cardIdx === cardIdx ? ' selected' : '';
+      const colorDot = card.color === 'rainbow' ? '🌈' : {'red':'🔴','orange':'🟠','yellow':'🟡','green':'🟢','blue':'🔵','purple':'🟣'}[card.color] || '⚫';
+      const disabled = isUsed && !isSel ? ' disabled' : '';
+      opts += `<option value="${cardIdx}"${isSel}${disabled}>${colorDot} ${starBadgeText(card.stars)} ${card.label} · $${card.price}M${isUsed?' (used)':''}</option>`;
     });
+    // Fallback if no picks tracked: use tier system
+    if(catPicks.length === 0) {
+      const purchased = team.purchases[type];
+      const used = {};
+      team.films.forEach((f,i) => { if(i!==fi && f[filmKey]) { const k=f[filmKey].stars; used[k]=(used[k]||0)+1; } });
+      const tiers = type==='scripts'?SCRIPT_TIERS:type==='cast'?CAST_TIERS:CREW_TIERS;
+      tiers.forEach(tier => {
+        const avail = purchased[tier.stars-1].qty - (used[tier.stars]||0);
+        const sel = film[filmKey]?.stars === tier.stars ? ' selected' : '';
+        const dis = avail <= 0 && !sel ? ' disabled' : '';
+        opts += `<option value="s${tier.stars}"${sel}${dis}>${starBadgeText(tier.stars)} ${tier.label} · $${tier.price}M (${avail} avail)</option>`;
+      });
+    }
     return opts;
   }
 
-  const scriptOptions = tierOptions('scripts', 'script', SCRIPT_TIERS);
-  const castOptions   = tierOptions('cast',    'cast',   CAST_TIERS);
-  const crewOptions   = tierOptions('crew',    'crew',   CREW_TIERS);
+  const scriptOptions = cardOptions('scripts', 'script');
+  const castOptions   = cardOptions('cast',    'cast');
+  const crewOptions   = cardOptions('crew',    'crew');
 
   const windowOptions = `<option value="">— choose —</option>` +
     RELEASE_WINDOWS.map(w => `<option value="${w.id}"${film.window===w.id?' selected':''}>${w.name} · $${w.pool}M pool</option>`).join('');
@@ -1824,7 +1981,12 @@ function buildMovieCard(team, film, fi) {
   ).join('');
 
   const dirDir = film.director !== null ? G.directorPool[film.director] : null;
-  const starSwatch = (s) => s ? starBadge(s.stars, '30px') : `<span style="color:var(--ink5);font-size:11px;">—</span>`;
+  const starSwatch = (s) => s
+    ? `<span style="display:inline-flex;align-items:center;gap:6px;">
+        ${s.color ? colorSwatch(s.color, '16px') : ''}
+        ${starBadge(s.stars, '26px')}
+      </span>`
+    : `<span style="color:var(--ink5);font-size:11px;">—</span>`;
 
   const titleVal = film.title || '';
 
@@ -1900,6 +2062,13 @@ function buildMovieCard(team, film, fi) {
             <span style="font-size:10px;letter-spacing:0.1em;color:#888;text-transform:uppercase;">Luck</span>
             <span style="font-size:12px;color:#aaa;font-style:italic;">1–100 at release</span>
           </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:3px;">
+            <span style="font-size:10px;letter-spacing:0.1em;color:#888;text-transform:uppercase;">Color Harmony</span>
+            <span style="font-size:12px;font-weight:700;color:${harmonyScore.hBonus > 0 ? '#1E8449' : harmonyScore.hBonus < 0 ? '#C0392B' : '#aaa'};">
+              ${harmonyScore.harmonyLabel || '—'} ${harmonyScore.hBonus !== undefined && harmonyScore.hBonus !== 0 ? (harmonyScore.hBonus > 0 ? '+' : '') + harmonyScore.hBonus.toFixed(2) : ''}
+              ${harmonyScore.filmColors ? harmonyScore.filmColors.map(c => colorSwatch(c,'14px')).join(' ') : ''}
+            </span>
+          </div>
         </div>
         ${harmonyScore.mood && harmonyScore.mood.face !== '—' ? `<div style="font-size:9px;margin-top:8px;padding:5px 7px;border-radius:4px;background:${harmonyScore.mood.metCount===2?'#e8f5e9':harmonyScore.mood.metCount===1?'#fffde7':'#fdecea'};color:${harmonyScore.mood.color};">
           ${harmonyScore.mood.face} Director is ${harmonyScore.mood.label.toLowerCase()}
@@ -1922,13 +2091,28 @@ function setFilmPiece(teamId, fi, piece, val) {
   if(piece === 'director') {
     film.director = val === '' ? null : parseInt(val);
   } else {
-    if(val === '') {
+    if(val === '' || val === null) {
       film[piece] = null;
     } else {
-      const stars = parseInt(val);
-      const tierMap = {script: SCRIPT_TIERS, cast: CAST_TIERS, crew: CREW_TIERS};
-      const tier = tierMap[piece].find(t => t.stars === stars);
-      film[piece] = tier ? {stars, label: tier.label, price: tier.price} : null;
+      const catKey = piece === 'script' ? 'scripts' : piece;
+      const cardIdx = parseInt(val);
+      // New system: card index → look up full card with color
+      if(!isNaN(cardIdx) && G.supply[catKey] && G.supply[catKey][cardIdx]) {
+        const card = G.supply[catKey][cardIdx];
+        film[piece] = {stars:card.stars, label:card.label, price:card.price, color:card.color, _cardIdx:cardIdx};
+      } else if(typeof val === 'string' && val.startsWith('s')) {
+        // Legacy star-only system
+        const stars = parseInt(val.slice(1));
+        const tierMap = {script:SCRIPT_TIERS, cast:CAST_TIERS, crew:CREW_TIERS};
+        const tier = tierMap[piece].find(t => t.stars === stars);
+        film[piece] = tier ? {stars, label:tier.label, price:tier.price} : null;
+      } else {
+        // Old system fallback (plain number = stars)
+        const stars = parseInt(val);
+        const tierMap = {script:SCRIPT_TIERS, cast:CAST_TIERS, crew:CREW_TIERS};
+        const tier = tierMap[piece]?.find(t => t.stars === stars);
+        film[piece] = tier ? {stars, label:tier.label, price:tier.price} : null;
+      }
     }
   }
   renderAssembleGrid();
@@ -1958,6 +2142,41 @@ function updateAssembleStatus() {
   if(problems.length===0) el.textContent = '✓ All films ready';
   else el.textContent = `${problems.length} film${problems.length!==1?'s':''} need attention`;
   el.style.color = problems.length===0 ? '#1E8449' : 'var(--muted)';
+}
+
+
+// Get color of the card assigned to a specific film slot
+function getFilmPieceColor(team, type, piece) {
+  if(!piece) return null;
+  const catKey = type === 'script' ? 'scripts' : type;
+  const picks = team.picks && team.picks[catKey] ? team.picks[catKey] : [];
+  // Find pick matching this star level
+  const card = picks.map(ci => G.supply[catKey][ci]).filter(c => c && c.stars === piece.stars);
+  // If multiple same-star picks, return them all — caller picks by film index
+  return card.length > 0 ? card[0].color : null;
+}
+
+// Get all colors for a film (director, cast, crew, script)
+function getFilmColors(team, film, fi) {
+  const dir = (film.director !== null && film.director !== undefined) ? G.directorPool[film.director] : null;
+  const dirColor = dir ? dir.color : null;
+  // For cast/crew/script: use picks array indexed by film index within same-star picks
+  function pieceColor(type, piece) {
+    if(!piece) return null;
+    const catKey = type === 'script' ? 'scripts' : type;
+    const picks = team.picks && team.picks[catKey] ? team.picks[catKey] : [];
+    const sameStarPicks = picks.map((ci,pi) => ({ci, pi, card:G.supply[catKey][ci]}))
+      .filter(({card}) => card && card.stars === piece.stars);
+    // Each film gets the next available same-star pick by film index
+    const idx = fi % sameStarPicks.length;
+    return sameStarPicks[idx] ? sameStarPicks[idx].card.color : piece.color || null;
+  }
+  return [
+    dirColor,
+    pieceColor('cast', film.cast),
+    pieceColor('crew', film.crew),
+    pieceColor('script', film.script),
+  ].filter(Boolean);
 }
 
 function computeHarmony(team, film) {
@@ -1991,16 +2210,30 @@ function computeHarmony(team, film) {
   const barScore = qualityMult >= 3.5 ? 4 : qualityMult >= 2.5 ? 3 : qualityMult >= 1.5 ? 2 : qualityMult >= 0.9 ? 1 : 0;
   const labels = {4:'ELITE', 3:'STRONG', 2:'SOLID', 1:'MODEST', 0:'WEAK'};
 
+  // Color harmony bonus: perfect match +0.75 stars, clash -0.25 stars
+  const fi = film._fi !== undefined ? film._fi : 0; // film index within team
+  const filmColors = getFilmColors(team, film, fi);
+  const harmonyVal  = colorHarmony(filmColors);
+  const hBonus      = harmonyBonus(harmonyVal);
+  const finalAvg    = Math.max(1, Math.min(5, avg + hBonus));
+  const finalScore  = finalAvg !== avg
+    ? (0.45 + Math.pow(Math.max(0,(finalAvg-1)/4), 0.95) * 1.70) * synergy * spike
+    : qualityMult;
+
   return {
     matches: barScore,
     label: labels[barScore],
-    multiplier: qualityMult.toFixed(2),
+    multiplier: finalScore.toFixed(2),
     qualityScore,
-    qualityMult,
+    qualityMult: finalScore,
     baseQuality: qualityMult,
     mood: moodData,
-    rawAvg,             // pre-mood average
-    avgStars: avg       // post-mood effective average (used in scoring)
+    rawAvg,
+    avgStars: finalAvg,
+    harmonyVal,
+    hBonus,
+    filmColors,
+    harmonyLabel: harmonyVal >= 0.9 ? 'Perfect' : harmonyVal >= 0.7 ? 'Great' : harmonyVal >= 0.5 ? 'Good' : harmonyVal >= 0.3 ? 'Weak' : 'Clash',
   };
 }
 
@@ -2562,9 +2795,14 @@ function showSeasonCards(wr, idx) {
     const profitColor = f.profit >= 0 ? '#1A7A3A' : '#C0392B';
 
     card.innerHTML = `
-      <div style="background:#f8f8f8;padding:10px 14px;">
-        <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:13px;color:#111;">${f.film.title || f.team.name + ' Film ' + (f.fi+1)}</div>
-        <div style="font-size:10px;font-weight:700;color:${f.team.color};letter-spacing:0.08em;margin-top:2px;">${f.team.name}</div>
+      <div style="background:#f8f8f8;padding:0;position:relative;overflow:hidden;">
+        <img src="${titleToFilename(f.film.title || '')}"
+          style="width:100%;height:120px;object-fit:cover;display:block;"
+          onerror="this.style.display='none';this.nextElementSibling.style.paddingTop='10px'">
+        <div style="padding:8px 14px 10px;">
+          <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:13px;color:#111;">${f.film.title || f.team.name + ' Film ' + (f.fi+1)}</div>
+          <div style="font-size:10px;font-weight:700;color:${f.team.color};letter-spacing:0.08em;margin-top:2px;">${f.team.name}</div>
+        </div>
       </div>
       <div style="padding:14px 14px 6px;">
         ${(()=>{
