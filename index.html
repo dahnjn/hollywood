@@ -936,7 +936,7 @@ function genScifiTitle() {
   return _titlePool.splice(idx, 1)[0]; // pick without repeat
 }
 function titleToFilename(title) {
-  return 'posters/poster-' + title.toLowerCase().replace(/\s+/g,'-') + '.jpg';
+  return 'poster-' + title.toLowerCase().replace(/\s+/g,'-') + '.jpg';
 }
 
 const TEAM_COLORS_CSS = ['#D4574A','#D4874A','#4A9D7A','#4A7AD4','#C8A20A','#9B59B6'];
