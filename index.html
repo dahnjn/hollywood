@@ -2137,39 +2137,39 @@ function buildMovieCard(team, film, fi) {
       </div>
       <div class="mc-harmony">
         <div class="mc-harmony-label">FILM SCORE PREVIEW</div>
-        <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px;">
           <div style="display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:10px;letter-spacing:0.1em;color:#888;text-transform:uppercase;">Quality</span>
-            <span style="font-size:13px;font-weight:700;color:#111;">${harmonyScore.avgStars ? starBadge(harmonyScore.avgStars % 1 === 0 ? harmonyScore.avgStars : parseFloat(harmonyScore.avgStars.toFixed(1)),'26px') + (harmonyScore.mood && harmonyScore.mood.mood !== 0 ? ' <span style="font-size:9px;color:#aaa;">(raw ' + harmonyScore.rawAvg.toFixed(1) + ' ' + (harmonyScore.mood.mood > 0 ? '+' : '') + harmonyScore.mood.mood.toFixed(1) + ')</span>' : '') : '—'}</span>
+            <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.1em;">Quality <span style="color:#ccc;">[40%]</span></span>
+            <span style="font-size:16px;font-weight:800;color:#111;">
+              ${harmonyScore.avgStars ? harmonyScore.avgStars.toFixed(1) : '—'}
+              ${harmonyScore.mood && harmonyScore.mood.mood !== 0 ? `<span style="font-size:9px;font-weight:400;color:#aaa;">(raw ${harmonyScore.rawAvg?harmonyScore.rawAvg.toFixed(1):'?'} ${harmonyScore.mood.mood>0?'+':''}${harmonyScore.mood.mood.toFixed(1)})</span>` : ''}
+            </span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:10px;letter-spacing:0.1em;color:#888;text-transform:uppercase;">Director</span>
-            ${harmonyScore.mood && harmonyScore.mood.face !== '—' ? `<span style="font-size:13px;" title="${harmonyScore.mood.label}: ${harmonyScore.mood.mood > 0 ? '+' : ''}${harmonyScore.mood.mood.toFixed(1)} quality bonus">${harmonyScore.mood.face} <span style="font-size:11px;font-weight:700;color:${harmonyScore.mood.color};">${harmonyScore.mood.mood > 0 ? '+' : ''}${harmonyScore.mood.mood.toFixed(1)}</span></span>` : '<span style="font-size:12px;color:#aaa;">—</span>'}
+            <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.1em;">Harmony <span style="color:#ccc;">[30%]</span></span>
+            <span style="font-size:13px;font-weight:700;color:${harmonyScore.hBonus > 0 ? '#1E8449' : harmonyScore.hBonus < 0 ? '#C0392B' : '#888'};">
+              ${harmonyScore.harmonyLabel || '—'}${harmonyScore.hBonus ? ' (' + (harmonyScore.hBonus>0?'+':'') + harmonyScore.hBonus.toFixed(2) + ')' : ''}
+              ${harmonyScore.filmColors ? harmonyScore.filmColors.map(c => colorSwatch(c,'13px')).join('') : ''}
+            </span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:10px;letter-spacing:0.1em;color:#888;text-transform:uppercase;">Marketing</span>
+            <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.1em;">Marketing <span style="color:#ccc;">[20%]</span></span>
             <span style="font-size:13px;font-weight:700;color:#111;">${film.budget ? '$' + film.budget + 'M' : '—'}</span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:10px;letter-spacing:0.1em;color:#888;text-transform:uppercase;">Luck</span>
+            <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.1em;">Luck <span style="color:#ccc;">[10%]</span></span>
             <span style="font-size:12px;color:#aaa;font-style:italic;">1–100 at release</span>
           </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:3px;">
-            <span style="font-size:10px;letter-spacing:0.1em;color:#888;text-transform:uppercase;">Color Harmony</span>
-            <span style="font-size:12px;font-weight:700;color:${harmonyScore.hBonus > 0 ? '#1E8449' : harmonyScore.hBonus < 0 ? '#C0392B' : '#aaa'};">
-              ${harmonyScore.harmonyLabel || '—'} ${harmonyScore.hBonus !== undefined && harmonyScore.hBonus !== 0 ? (harmonyScore.hBonus > 0 ? '+' : '') + harmonyScore.hBonus.toFixed(2) : ''}
-              ${harmonyScore.filmColors ? harmonyScore.filmColors.map(c => colorSwatch(c,'14px')).join(' ') : ''}
-            </span>
+          <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid #eee;padding-top:5px;margin-top:2px;">
+            <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.1em;">Director <span style="color:#ccc;">[BONUS]</span></span>
+            ${harmonyScore.mood && harmonyScore.mood.face !== '—'
+              ? `<span style="font-size:13px;font-weight:700;color:${harmonyScore.mood.color};">${harmonyScore.mood.face} ${harmonyScore.mood.mood>0?'+':''}${harmonyScore.mood.mood.toFixed(1)}</span>`
+              : '<span style="font-size:12px;color:#aaa;">—</span>'}
           </div>
         </div>
-        ${harmonyScore.mood && harmonyScore.mood.face !== '—' ? `<div style="font-size:9px;margin-top:8px;padding:5px 7px;border-radius:4px;background:${harmonyScore.mood.metCount===2?'#e8f5e9':harmonyScore.mood.metCount===1?'#fffde7':'#fdecea'};color:${harmonyScore.mood.color};">
-          ${harmonyScore.mood.face} Director is ${harmonyScore.mood.label.toLowerCase()}
-          ${harmonyScore.mood.mood !== 0 ? '— ' + (harmonyScore.mood.mood > 0 ? '+' : '') + harmonyScore.mood.mood.toFixed(1) + ' quality bonus' : ''}
+        ${harmonyScore.mood && harmonyScore.mood.face !== '—' && harmonyScore.mood.mood !== 0 ? `<div style="font-size:9px;margin-top:6px;padding:4px 7px;border-radius:4px;background:${harmonyScore.mood.mood>0?'#e8f5e9':'#fdecea'};color:${harmonyScore.mood.color};">
+          ${harmonyScore.mood.face} Director is ${harmonyScore.mood.label.toLowerCase()} — ${harmonyScore.mood.mood>0?'+':''}${harmonyScore.mood.mood.toFixed(1)} quality bonus
         </div>` : ''}
-        <div style="font-size:9px;color:#aaa;margin-top:8px;border-top:1px solid #eee;padding-top:6px;line-height:1.6;">
-          Quality 40% · Harmony 30% · Marketing 20% · Luck 10%<br>
-          <span style="color:#B8860B;">+ Director happiness bonus (±0.5 stars)</span>
-        </div>
       </div>
     </div>
   `;
@@ -2923,16 +2923,30 @@ function showSeasonCards(wr, idx) {
       <div style="padding:14px 14px 6px;">
         ${(()=>{
           const mood = f.harmony && f.harmony.mood;
-          const raw = f.harmony ? f.harmony.rawAvg : f.avgStars;
-          const effective = f.avgStars || 0;
           const moodVal = mood ? mood.mood : 0;
-          let qualLabel = effective.toFixed(1);
-          if(moodVal > 0)  qualLabel += ' <span style="font-size:9px;color:#1E8449;">(incl. +' + moodVal.toFixed(1) + ' happiness bonus)</span>';
-          if(moodVal < 0)  qualLabel += ' <span style="font-size:9px;color:#C0392B;">(incl. ' + moodVal.toFixed(1) + ' unhappy penalty)</span>';
-          return bar('Quality', qNorm, '#B8860B', qualLabel);
+          let qualLabel = (f.avgStars||0).toFixed(1);
+          if(moodVal > 0) qualLabel += ' <span style="font-size:9px;color:#1E8449;">(+' + moodVal.toFixed(1) + ' bonus)</span>';
+          if(moodVal < 0) qualLabel += ' <span style="font-size:9px;color:#C0392B;">(' + moodVal.toFixed(1) + ' penalty)</span>';
+          return bar('Quality [40%]', qNorm, '#B8860B', qualLabel);
         })()}
-        ${bar('Marketing', mNorm, '#1558A0', '$' + (f.budget||0) + 'M')}
-        ${bar('Luck', lNorm, '#6B4C9A', Math.round(lNorm*100) + ' / 100')}
+        ${(()=>{
+          const hVal = f.harmony ? (f.harmony.harmonyVal || 0) : 0;
+          const hLabel = f.harmony ? (f.harmony.harmonyLabel || '—') : '—';
+          const hColors = f.harmony && f.harmony.filmColors ? f.harmony.filmColors.map(c => colorSwatch(c,'12px')).join('') : '';
+          const hColor = hVal >= 0.7 ? '#1E8449' : hVal >= 0.5 ? '#B8860B' : '#C0392B';
+          return bar('Harmony [30%]', hVal, hColor, hLabel + ' ' + hColors);
+        })()}
+        ${bar('Marketing [20%]', mNorm, '#1558A0', '$' + (f.budget||0) + 'M')}
+        ${bar('Luck [10%]', lNorm, '#6B4C9A', Math.round(lNorm*100) + ' / 100')}
+        ${(()=>{
+          const mood = f.harmony && f.harmony.mood;
+          if(!mood || mood.face === '—') return '';
+          const moodColor = mood.mood > 0 ? '#1E8449' : mood.mood < 0 ? '#C0392B' : '#888';
+          return `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px;padding-top:4px;border-top:1px solid #f0f0f0;">
+            <span style="font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:0.1em;">Director [BONUS]</span>
+            <span style="font-size:11px;font-weight:700;color:${moodColor};">${mood.face} ${mood.mood>0?'+':''}${mood.mood.toFixed(1)}</span>
+          </div>`;
+        })()}
       </div>
       <div style="padding:0 14px 14px;display:flex;flex-direction:column;flex:1;">
         <div style="border-top:1px solid #eee;padding-top:10px;margin-top:4px;display:flex;flex-direction:column;flex:1;">
@@ -3155,10 +3169,15 @@ function finishReveal() {
     }).join('');
 
     div.innerHTML = `
-      <div class="wr-header">
-        <div class="wr-month" style="font-size:28px;letter-spacing:0.2em;">${w.name.toUpperCase()} SEASON</div>
-        <div><div class="wr-pool" style="font-size:36px;">$${w.pool}M</div><div class="wr-pool-label">BOX OFFICE POOL</div></div>
-        <div style="margin-left:auto;font-size:11px;color:var(--muted);">${wr.films.length} film${wr.films.length!==1?'s':''} competing</div>
+      <div class="wr-header" style="align-items:center;">
+        <div>
+          <div class="wr-month" style="font-size:24px;letter-spacing:0.2em;">${w.name.toUpperCase()} SEASON</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${wr.films.length} film${wr.films.length!==1?'s':''} competing</div>
+        </div>
+        <div style="margin-left:auto;text-align:right;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:56px;color:#1E8449;line-height:1;letter-spacing:0.02em;">$${w.pool}M</div>
+          <div class="wr-pool-label" style="color:#1E8449;opacity:0.7;">BOX OFFICE POOL</div>
+        </div>
       </div>
       <div class="wr-films">
         <div style="display:grid;grid-template-columns:3fr 70px 90px 130px 90px;gap:8px;padding:8px 20px;border-bottom:1px solid var(--ink4);">
