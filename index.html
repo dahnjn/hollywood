@@ -544,6 +544,45 @@ input[type=number] { -moz-appearance:textfield; }
 <!-- ══════════════════════════════════
      GAME SCREENS (shared header)
 ══════════════════════════════════ -->
+<div id="screen-intro" class="screen" style="display:none;background:#0a0a0a;align-items:center;justify-content:center;">
+  <div style="max-width:680px;text-align:center;padding:48px 32px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:0.15em;color:#fff;margin-bottom:32px;">HOW TO WIN</div>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:40px;">
+      <div style="display:flex;align-items:center;gap:16px;background:rgba(255,255,255,0.05);border-radius:8px;padding:16px 20px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#B8860B;width:48px;text-align:right;flex-shrink:0;">40%</div>
+        <div style="text-align:left;"><div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#fff;letter-spacing:0.1em;">FILM QUALITY</div>
+        <div style="font-size:12px;color:#888;margin-top:2px;">Stars of your director, cast, crew &amp; script — averaged together</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;background:rgba(255,255,255,0.05);border-radius:8px;padding:16px 20px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#8E44AD;width:48px;text-align:right;flex-shrink:0;">30%</div>
+        <div style="text-align:left;"><div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#fff;letter-spacing:0.1em;">COLOR HARMONY</div>
+        <div style="font-size:12px;color:#888;margin-top:2px;">Match cast, crew &amp; script to your director's color palette</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;background:rgba(255,255,255,0.05);border-radius:8px;padding:16px 20px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#2980B9;width:48px;text-align:right;flex-shrink:0;">20%</div>
+        <div style="text-align:left;"><div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#fff;letter-spacing:0.1em;">MARKETING</div>
+        <div style="font-size:12px;color:#888;margin-top:2px;">Spend to get people into seats</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;background:rgba(255,255,255,0.05);border-radius:8px;padding:16px 20px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#27AE60;width:48px;text-align:right;flex-shrink:0;">10%</div>
+        <div style="text-align:left;"><div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#fff;letter-spacing:0.1em;">LUCK</div>
+        <div style="font-size:12px;color:#888;margin-top:2px;">Word of mouth, timing — you can't buy it</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.15);border-radius:8px;padding:16px 20px;">
+        <div style="font-size:26px;width:48px;text-align:right;flex-shrink:0;">🎬</div>
+        <div style="text-align:left;"><div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#B8860B;letter-spacing:0.1em;">DIRECTOR'S HAPPINESS</div>
+        <div style="font-size:12px;color:#888;margin-top:2px;">Satisfy their non-negotiables and match their color — a happy director lifts the whole film. An unhappy one tanks it.</div></div>
+      </div>
+    </div>
+    <button onclick="document.getElementById('screen-intro').style.display='none';document.getElementById('screen-game').style.display='flex';showPhase('draft');renderDraft();"
+      style="padding:14px 52px;background:transparent;border:2px solid #B8860B;color:#B8860B;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.3em;border-radius:3px;cursor:pointer;transition:all 0.2s;"
+      onmouseenter="this.style.background='#B8860B';this.style.color='#000'"
+      onmouseleave="this.style.background='transparent';this.style.color='#B8860B'">
+      BEGIN →
+    </button>
+  </div>
+</div>
+
 <div id="screen-game" class="screen" style="flex-direction:column;background:#FAFAFA;">
   <header class="game-header">
     <div class="header-logo">HOLLYWOOD</div>
@@ -703,9 +742,23 @@ function wheelDist(a, b) {
   if(ai<0||bi<0) return 3;
   return Math.min(Math.abs(ai-bi), WHEEL.length-Math.abs(ai-bi));
 }
-function colorHarmony(colors) {
+function colorHarmony(colors, directorColor) {
+  // Director color is the anchor — harmony is how well the other pieces match the director
+  // If no director color, fall back to pairwise average
   const cols = colors.filter(Boolean);
   if(!cols.length) return 0.5;
+
+  if(directorColor && directorColor !== 'rainbow') {
+    // Score each piece against the director's color
+    const pieces = cols.filter(c => c !== directorColor); // don't compare dir to itself
+    if(!pieces.length) return 1.0; // all same as director = perfect
+    const dists = pieces.map(c => wheelDist(directorColor, c));
+    const avgDist = dists.reduce((a,b)=>a+b,0) / dists.length;
+    return Math.max(0, 1.0 - avgDist/3.0);
+  }
+  if(directorColor === 'rainbow') return 1.0; // rainbow director = always harmonious
+
+  // Fallback: pairwise
   const pairs = [];
   for(let i=0;i<cols.length;i++) for(let j=i+1;j<cols.length;j++) pairs.push(wheelDist(cols[i],cols[j]));
   const avgDist = pairs.length ? pairs.reduce((a,b)=>a+b,0)/pairs.length : 0;
@@ -889,8 +942,8 @@ function checkNonNegotiables(dir, team) {
 // — only the actual cast/crew/script assigned to this specific film counts
 // Returns directorMood: +0.5 (both met) → 0 (one met) → -0.5 (neither met)
 // and a happiness level 0-4 (😊😊→😐→😞)
-function checkFilmNonNegotiables(dir, film) {
-  if(!dir || !dir.reqs) return {metCount:2, mood:0.5, face:'😄', label:'Thrilled', color:'#1E8449'};
+function checkFilmNonNegotiables(dir, film, team, fi) {
+  if(!dir) return {metCount:2, mood:0.5, face:'😄', label:'Thrilled', color:'#1E8449', reqsMet:2, inHarmony:true};
 
   function filmVal(cat) {
     if(cat === 'cast')   return film.cast   ? film.cast.stars   : 0;
@@ -899,16 +952,32 @@ function checkFilmNonNegotiables(dir, film) {
     return 0;
   }
 
-  const met = dir.reqs.map(r => filmVal(r.cat) >= r.minStars);
-  const metCount = met.filter(Boolean).length;
+  // (1) Non-negotiable quality requirements
+  const met = dir.reqs ? dir.reqs.map(r => filmVal(r.cat) >= r.minStars) : [true, true];
+  const reqsMet = met.filter(Boolean).length;
+  const reqsTotal = met.length;
 
-  // mood bonus: +0.5 both met, 0 one met, -0.5 neither met
-  const mood = metCount === 2 ? 0.5 : metCount === 1 ? 0 : -0.5;
-  const face  = metCount === 2 ? '😄' : metCount === 1 ? '😐' : '😞';
-  const label = metCount === 2 ? 'Thrilled' : metCount === 1 ? 'Neutral' : 'Unhappy';
-  const color = metCount === 2 ? '#1E8449' : metCount === 1 ? '#B8860B' : '#C0392B';
+  // (2) Color harmony with director
+  let inHarmony = true;
+  if(dir.color && team && fi !== undefined) {
+    const colorsObj = getFilmColors(team, film, fi);
+    const hVal = colorHarmony(colorsObj.all || [], dir.color);
+    inHarmony = hVal >= 0.5; // at least "Good" harmony
+  }
 
-  return {met, metCount, mood, face, label, color};
+  // Happiness: thrilled if BOTH reqs met AND in harmony
+  //            pleased if one condition met
+  //            neutral if reqs met but not harmony, or vice versa
+  //            unhappy if neither
+  const score = (reqsMet === reqsTotal ? 1 : reqsMet > 0 ? 0.5 : 0)
+              + (inHarmony ? 1 : 0);
+
+  let mood, face, label, color;
+  if(score >= 2)       { mood=0.5;  face='😄'; label='Thrilled'; color='#1E8449'; }
+  else if(score >= 1)  { mood=0;    face='😐'; label='Neutral';  color='#B8860B'; }
+  else                 { mood=-0.5; face='😞'; label='Unhappy';  color='#C0392B'; }
+
+  return {met, metCount:reqsMet, mood, face, label, color, reqsMet, inHarmony};
 }
 
 // ════════════════════════════════════════════════════════
@@ -986,10 +1055,18 @@ function initState(names) {
 //  NAVIGATION & UTILS
 // ════════════════════════════════════════════════════════
 function startGame() {
+  const titleEl = document.getElementById('screen-title');
+  const introEl = document.getElementById('screen-intro');
+  if(titleEl) titleEl.classList.remove('active');
+  if(introEl) { introEl.style.display = 'flex'; }
+  initGame();
+}
+
+function initGame() {
   const names = ['Team 1', 'Team 2', 'Team 3', 'Team 4'];
   initState(names);
-  document.getElementById('screen-title').classList.remove('active');
-  document.getElementById('screen-game').classList.add('active');
+  const tEl = document.getElementById('screen-title'); if(tEl) tEl.classList.remove('active');
+  const gEl = document.getElementById('screen-game'); if(gEl) gEl.classList.add('active');
   renderHeader();
   showPhase('draft');
   renderDraft();
@@ -1221,14 +1298,26 @@ function renderDraftRosters() {
     ];
 
     const rosterRows = cats.map(cat => {
-      const items = team.purchases[cat.key]
-        .filter(p => p.qty > 0)
-        .flatMap(p => {
-          const tier = cat.tiers[p.stars-1];
-          return Array.from({length:p.qty}, () =>
-            `<span style="display:inline-flex;align-items:center;margin:1px;">${starBadge(p.stars, '28px')}</span>`
-          );
-        }).join('');
+      // Use actual picked cards (with colors) if available
+      const pickedCards = team.picks && team.picks[cat.key]
+        ? team.picks[cat.key].map(ci => G.supply[cat.key][ci]).filter(Boolean)
+        : [];
+      const items = pickedCards.length > 0
+        ? pickedCards.map(card => {
+            const dot = card.color === 'rainbow' ? '🌈' : '';
+            const bg = card.color === 'rainbow'
+              ? 'linear-gradient(135deg,#E74C3C,#E67E22,#F1C40F,#27AE60,#2980B9,#8E44AD)'
+              : (COLOR_SOLID[card.color] || '#ccc');
+            return `<span style="display:inline-flex;align-items:center;gap:3px;margin:2px;background:#f5f5f5;border-radius:6px;padding:2px 6px 2px 3px;border:2px solid ${bg};">
+              <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:${bg};flex-shrink:0;">${dot}</span>
+              ${starBadge(card.stars,'22px')}
+            </span>`;
+          }).join('')
+        : team.purchases[cat.key]
+            .filter(p => p.qty > 0)
+            .flatMap(p => Array.from({length:p.qty}, () =>
+              `<span style="display:inline-flex;align-items:center;margin:1px;">${starBadge(p.stars,'22px')}</span>`
+            )).join('');
       const count = teamSlotCount(team, cat.key);
       return `<div style="display:flex;align-items:flex-start;gap:5px;margin-bottom:4px;">
         <span style="font-size:9px;color:#aaa;width:38px;flex-shrink:0;padding-top:3px;text-transform:uppercase;letter-spacing:0.08em;">${cat.label}</span>
@@ -1984,9 +2073,10 @@ function buildMovieCard(team, film, fi) {
 
   const dirDir = film.director !== null ? G.directorPool[film.director] : null;
   const starSwatch = (s) => s
-    ? `<span style="display:inline-flex;align-items:center;gap:6px;">
-        ${s.color ? colorSwatch(s.color, '16px') : ''}
+    ? `<span style="display:inline-flex;align-items:center;gap:8px;">
+        ${s.color ? colorSwatch(s.color, '20px') : '<span style="display:inline-block;width:20px;height:20px;border-radius:3px;border:2px dashed #ccc;"></span>'}
         ${starBadge(s.stars, '26px')}
+        ${s.color ? `<span style="font-size:10px;font-weight:600;color:${COLOR_SOLID[s.color]||'#aaa'};text-transform:uppercase;">${s.color}</span>` : ''}
       </span>`
     : `<span style="color:var(--ink5);font-size:11px;">—</span>`;
 
@@ -2006,8 +2096,8 @@ function buildMovieCard(team, film, fi) {
           `<option value="">— choose —</option>` +
           availDirs.map(d => {
             const dir = G.directorPool[d.dirIdx];
-            const uses = dirUsageCount[d.dirIdx];
-            return `<option value="${d.dirIdx}"${film.director===d.dirIdx?' selected':''}>${dir.name} ${starBadgeText(dir.stars)}</option>`;
+            const colorDot = dir.color === 'rainbow' ? '🌈' : {'red':'🔴','orange':'🟠','yellow':'🟡','green':'🟢','blue':'🔵','purple':'🟣'}[dir.color] || '⚫';
+            return `<option value="${d.dirIdx}"${film.director===d.dirIdx?' selected':''}>${colorDot} ${dir.name} ${starBadgeText(dir.stars)}</option>`;
           }).join('')
         }</select>
       </div>
@@ -2076,7 +2166,10 @@ function buildMovieCard(team, film, fi) {
           ${harmonyScore.mood.face} Director is ${harmonyScore.mood.label.toLowerCase()}
           ${harmonyScore.mood.mood !== 0 ? '— ' + (harmonyScore.mood.mood > 0 ? '+' : '') + harmonyScore.mood.mood.toFixed(1) + ' quality bonus' : ''}
         </div>` : ''}
-        <div style="font-size:9px;color:#ccc;margin-top:8px;border-top:1px solid #eee;padding-top:6px;">Score = Quality×3 + Marketing×2 + Luck×1</div>
+        <div style="font-size:9px;color:#aaa;margin-top:8px;border-top:1px solid #eee;padding-top:6px;line-height:1.6;">
+          Quality 40% · Harmony 30% · Marketing 20% · Luck 10%<br>
+          <span style="color:#B8860B;">+ Director happiness bonus (±0.5 stars)</span>
+        </div>
       </div>
     </div>
   `;
@@ -2173,12 +2266,11 @@ function getFilmColors(team, film, fi) {
     const idx = fi % sameStarPicks.length;
     return sameStarPicks[idx] ? sameStarPicks[idx].card.color : piece.color || null;
   }
-  return [
+  return {
     dirColor,
-    pieceColor('cast', film.cast),
-    pieceColor('crew', film.crew),
-    pieceColor('script', film.script),
-  ].filter(Boolean);
+    all: [dirColor, pieceColor('cast', film.cast), pieceColor('crew', film.crew), pieceColor('script', film.script)].filter(Boolean),
+    pieces: [pieceColor('cast', film.cast), pieceColor('crew', film.crew), pieceColor('script', film.script)].filter(Boolean),
+  };
 }
 
 function computeHarmony(team, film) {
@@ -2197,7 +2289,8 @@ function computeHarmony(team, film) {
   // Neutral  (+0.0):       one met
   // Unhappy  (-0.5 stars): neither met — e.g. avg 4.3 → 3.8
   const dir = (film.director !== null && film.director !== undefined) ? G.directorPool[film.director] : null;
-  const moodData = dir ? checkFilmNonNegotiables(dir, film) : {mood:0, face:'—', label:'', color:'#aaa', metCount:2};
+  const fi2 = film._fi !== undefined ? film._fi : 0;
+  const moodData = dir ? checkFilmNonNegotiables(dir, film, team, fi2) : {mood:0, face:'—', label:'', color:'#aaa', metCount:2};
 
   const avg  = Math.max(1, Math.min(5, rawAvg + moodData.mood)); // clamp 1–5
   const minS = Math.min(...pieces);
@@ -2214,8 +2307,9 @@ function computeHarmony(team, film) {
 
   // Color harmony bonus: perfect match +0.75 stars, clash -0.25 stars
   const fi = film._fi !== undefined ? film._fi : 0; // film index within team
-  const filmColors = getFilmColors(team, film, fi);
-  const harmonyVal  = colorHarmony(filmColors);
+  const filmColorsObj = getFilmColors(team, film, fi);
+  const filmColors  = filmColorsObj.all || filmColorsObj; // compat
+  const harmonyVal  = colorHarmony(filmColors, filmColorsObj.dirColor);
   const hBonus      = harmonyBonus(harmonyVal);
   const finalAvg    = Math.max(1, Math.min(5, avg + hBonus));
   const finalScore  = finalAvg !== avg
@@ -2434,16 +2528,17 @@ function computeResults() {
         const qualityMult = harmony.qualityMult || 0.3;
         const marketing = Math.max(0, parseFloat(f.budget) || 0);
 
-        // SCORING FORMULA:
-        // score = (quality × 3) + (marketing × 2) + (luck × 1)
-        // Each component normalised to 0–1, then weighted and summed.
-
+        // SCORING FORMULA: Quality 40% + Harmony 30% + Marketing 20% + Luck 10%
         const Q_MIN = 0.45, Q_MAX = 4.30;
         const qualityNorm   = Math.max(0, Math.min(1, (qualityMult - Q_MIN) / (Q_MAX - Q_MIN)));
+        const harmonyNorm   = harmony.harmonyVal || 0.5; // 0–1 already
         const marketingNorm = Math.log(1 + marketing / 30) / Math.log(1 + 200 / 30);
         const luck          = Math.random();
 
-        const score = (qualityNorm * 3) + (marketingNorm * 2) + (luck * 1);
+        // Director happiness bonus (±0.15 on final score)
+        const dirMoodBonus = harmony.mood ? harmony.mood.mood * 0.3 : 0; // -0.5→-0.15, +0.5→+0.15
+
+        const score = (qualityNorm * 0.40) + (harmonyNorm * 0.30) + (marketingNorm * 0.20) + (luck * 0.10) + dirMoodBonus;
         const marketingBoost = marketingNorm; // for display
 
         films.push({
