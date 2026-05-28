@@ -2031,6 +2031,38 @@ function renderAssembleGrid() {
   updateAssembleStatus();
 }
 
+function buildScorePreview(hs, film) {
+  const avgS  = hs.avgStars || 1;
+  const qPts  = Math.round(Math.max(0, Math.min(40, (avgS-1)/4*40)));
+  const hPts  = Math.round(Math.max(0, Math.min(30, (hs.harmonyVal||0)*30)));
+  const mPts  = Math.round(Math.min(20, (film.budget||0)/5));
+  const hColor = hPts >= 20 ? '#1E8449' : hPts >= 10 ? '#B8860B' : '#C0392B';
+  const hSwatches = hs.filmColors ? hs.filmColors.map(function(c){return colorSwatch(c,'11px');}).join('') : '';
+  const hLabel = hs.harmonyLabel || '—';
+  const mood  = hs.mood;
+  const dPts  = mood ? (mood.mood > 0 ? 10 : mood.mood === 0 ? 5 : 0) : '?';
+  const dColor = mood ? mood.color : '#aaa';
+  const dFace  = (mood && mood.face !== '—') ? mood.face : '';
+  const dLabel = (mood && mood.face !== '—') ? mood.label : '—';
+  const mLabel = film.budget ? '$' + film.budget + 'M' : '$0M';
+
+  function row(label, value, vc) {
+    return '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:3px 0;">'
+      + '<span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.08em;">' + label + '</span>'
+      + '<span style="font-size:12px;font-weight:700;color:' + (vc||'#111') + ';text-align:right;">' + value + '</span>'
+      + '</div>';
+  }
+
+  return '<div style="margin-top:6px;border-top:1px solid #eee;padding-top:6px;">'
+    + row('Quality', avgS.toFixed(1) + ' <span style="font-size:10px;font-weight:400;color:#aaa;">→ ' + qPts + '/40</span>')
+    + row('Harmony', hLabel + ' ' + hSwatches + ' <span style="font-size:10px;font-weight:400;color:' + hColor + ';">→ ' + hPts + '/30</span>', hColor)
+    + row('Marketing', mLabel + ' <span style="font-size:10px;font-weight:400;color:#aaa;">→ ' + mPts + '/20</span>')
+    + row('Luck', '<span style="color:#aaa;font-style:italic;font-size:11px;">0–10 at release</span>')
+    + '<div style="border-top:1px solid #eee;margin-top:3px;padding-top:3px;">'
+    + row('Director Bonus', dFace + ' ' + dLabel + ' <span style="font-size:10px;font-weight:400;">→ ' + dPts + '/10</span>', dColor)
+    + '</div></div>';
+}
+
 function buildMovieCard(team, film, fi) {
   const card = document.createElement('div');
   card.className = 'movie-card';
