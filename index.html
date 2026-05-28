@@ -2164,40 +2164,7 @@ function buildMovieCard(team, film, fi) {
       </div>
       <div class="mc-harmony">
         <div class="mc-harmony-label">FILM SCORE PREVIEW</div>
-        <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px;">
-          ${(()=>{
-            const avgS = harmonyScore.avgStars || 1;
-            const qPts = Math.round(Math.max(0, Math.min(40, (avgS-1)/4*40)));
-            const hPts = Math.round(Math.max(0, Math.min(30, (harmonyScore.harmonyVal||0)*30)));
-            const mPts = Math.min(20, Math.round((film.budget||0)/5));
-            const dLabel = harmonyScore.mood && harmonyScore.mood.face !== '—' ? harmonyScore.mood.label : '—';
-            const dColor = harmonyScore.mood ? harmonyScore.mood.color : '#aaa';
-            const dFace  = harmonyScore.mood && harmonyScore.mood.face !== '—' ? harmonyScore.mood.face : '';
-            const dPts   = harmonyScore.mood ? (harmonyScore.mood.mood>0?10:harmonyScore.mood.mood===0?5:0) : '?';
-            const hColor = hPts >= 20 ? '#1E8449' : hPts >= 10 ? '#B8860B' : '#C0392B';
-            const hColors = harmonyScore.filmColors ? harmonyScore.filmColors.map(c => colorSwatch(c,'11px')).join('') : '';
-            return `
-            <div style="display:grid;grid-template-columns:1fr auto;gap:4px 8px;align-items:center;">
-              <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.08em;">Quality</span>
-              <span style="font-size:15px;font-weight:800;color:#111;text-align:right;">\${avgS.toFixed(1)} <span style="font-size:11px;color:#aaa;">→ \${qPts}/40</span></span>
-
-              <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.08em;">Harmony</span>
-              <span style="font-size:13px;font-weight:700;color:\${hColor};text-align:right;">\${harmonyScore.harmonyLabel||'—'} \${hColors} → \${hPts}/30</span>
-
-              <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.08em;">Marketing</span>
-              <span style="font-size:13px;font-weight:700;color:#111;text-align:right;">\${film.budget?'$'+film.budget+'M':'$0M'} → \${mPts}/20</span>
-
-              <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.08em;">Luck</span>
-              <span style="font-size:12px;color:#aaa;font-style:italic;text-align:right;">0–10 at release</span>
-
-              <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.08em;border-top:1px solid #eee;padding-top:4px;">Director Bonus</span>
-              <span style="font-size:13px;font-weight:700;color:\${dColor};text-align:right;border-top:1px solid #eee;padding-top:4px;">\${dFace} \${dLabel} → \${dPts}/10</span>
-            </div>`;
-          })()}
-        </div>
-        ${harmonyScore.mood && harmonyScore.mood.face !== '—' && harmonyScore.mood.mood !== 0 ? `<div style="font-size:9px;margin-top:6px;padding:4px 7px;border-radius:4px;background:${harmonyScore.mood.mood>0?'#e8f5e9':'#fdecea'};color:${harmonyScore.mood.color};">
-          ${harmonyScore.mood.face} Director is ${harmonyScore.mood.label.toLowerCase()} — ${harmonyScore.mood.mood>0?'+':''}${harmonyScore.mood.mood.toFixed(1)} quality bonus
-        </div>` : ''}
+        ${buildScorePreview(harmonyScore, film)}
       </div>
     </div>
   `;
