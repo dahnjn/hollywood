@@ -616,6 +616,7 @@ input[type=number] { -moz-appearance:textfield; }
     <div class="mt16 flex-row" style="gap:12px;flex-wrap:wrap;">
       <button class="btn btn-gold" id="finish-draft-btn" onclick="finishDraft()" style="display:none;">Done → Sign Directors</button>
       <button class="btn" onclick="autoAssignDraft()" style="border-color:var(--dim);color:var(--soft);">⚡ Auto-Draft All Teams</button>
+      <button class="btn" id="undo-draft-btn" onclick="undoDraftPick()" style="border-color:#C0392B;color:#C0392B;display:none;">↩ Undo Last Pick</button>
     </div>
   </div>
 
@@ -973,9 +974,9 @@ function checkFilmNonNegotiables(dir, film, team, fi) {
               + (inHarmony ? 1 : 0);
 
   let mood, face, label, color;
-  if(score >= 2)       { mood=0.5;  face='😄'; label='Thrilled'; color='#1E8449'; }
-  else if(score >= 1)  { mood=0;    face='😐'; label='Neutral';  color='#B8860B'; }
-  else                 { mood=-0.5; face='😞'; label='Unhappy';  color='#C0392B'; }
+  if(score >= 2)       { mood=0.5;  face='😄'; label='Thrilled (+10)'; color='#1E8449'; }
+  else if(score >= 1)  { mood=0;    face='😐'; label='Neutral (+5)';   color='#B8860B'; }
+  else                 { mood=-0.5; face='😞'; label='Unhappy (+0)';   color='#C0392B'; }
 
   return {met, metCount:reqsMet, mood, face, label, color, reqsMet, inHarmony};
 }
@@ -1249,6 +1250,9 @@ function draftPickCard(type, cardIdx) {
   if(!team.picks) team.picks = {cast:[],crew:[],scripts:[]};
   team.picks[type].push(cardIdx);
 
+  _draftHistory.push({type, cardIdx, teamId: team.id, teamName: team.name, starIdx: card.stars-1});
+  const undoBtn = document.getElementById('undo-draft-btn');
+  if(undoBtn) undoBtn.style.display = '';
   toast(`${team.name} picked ${card.color.toUpperCase()} ${card.label} ★${card.stars} for $${card.price}M`);
 
   // Advance to next team that still needs picks
@@ -1443,7 +1447,30 @@ function autoAssignDraft() {
   G.draftTurn = 0;
   renderDraft();
   const names = G.teams.map(t => `${t.name}: ${t._strategy.name}`).join(' · ');
+  _draftHistory = [];
+  const undoBtn2 = document.getElementById('undo-draft-btn'); if(undoBtn2) undoBtn2.style.display='none';
   toast('⚡ ' + names);
+}
+
+// Undo history for draft picks
+let _draftHistory = [];
+
+function undoDraftPick() {
+  if(!_draftHistory.length) { toast('Nothing to undo'); return; }
+  const last = _draftHistory.pop();
+  // Reverse the pick
+  const card = G.supply[last.type][last.cardIdx];
+  card.taken = false;
+  card.takenBy = null;
+  const team = G.teams[last.teamId];
+  team.purchases[last.type][last.starIdx].qty--;
+  const pi = team.picks[last.type].lastIndexOf(last.cardIdx);
+  if(pi >= 0) team.picks[last.type].splice(pi, 1);
+  // Restore turn
+  G.draftTurn = last.teamId;
+  renderDraft();
+  if(!_draftHistory.length) document.getElementById('undo-draft-btn').style.display = 'none';
+  toast('↩ Undid ' + last.teamName + "'s pick");
 }
 
 function advanceDraftTurnSilent() {
@@ -2138,34 +2165,35 @@ function buildMovieCard(team, film, fi) {
       <div class="mc-harmony">
         <div class="mc-harmony-label">FILM SCORE PREVIEW</div>
         <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.1em;">Quality <span style="color:#ccc;">[40%]</span></span>
-            <span style="font-size:16px;font-weight:800;color:#111;">
-              ${harmonyScore.avgStars ? harmonyScore.avgStars.toFixed(1) : '—'}
-              ${harmonyScore.mood && harmonyScore.mood.mood !== 0 ? `<span style="font-size:9px;font-weight:400;color:#aaa;">(raw ${harmonyScore.rawAvg?harmonyScore.rawAvg.toFixed(1):'?'} ${harmonyScore.mood.mood>0?'+':''}${harmonyScore.mood.mood.toFixed(1)})</span>` : ''}
-            </span>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.1em;">Harmony <span style="color:#ccc;">[30%]</span></span>
-            <span style="font-size:13px;font-weight:700;color:${harmonyScore.hBonus > 0 ? '#1E8449' : harmonyScore.hBonus < 0 ? '#C0392B' : '#888'};">
-              ${harmonyScore.harmonyLabel || '—'}${harmonyScore.hBonus ? ' (' + (harmonyScore.hBonus>0?'+':'') + harmonyScore.hBonus.toFixed(2) + ')' : ''}
-              ${harmonyScore.filmColors ? harmonyScore.filmColors.map(c => colorSwatch(c,'13px')).join('') : ''}
-            </span>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.1em;">Marketing <span style="color:#ccc;">[20%]</span></span>
-            <span style="font-size:13px;font-weight:700;color:#111;">${film.budget ? '$' + film.budget + 'M' : '—'}</span>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.1em;">Luck <span style="color:#ccc;">[10%]</span></span>
-            <span style="font-size:12px;color:#aaa;font-style:italic;">1–100 at release</span>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid #eee;padding-top:5px;margin-top:2px;">
-            <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.1em;">Director <span style="color:#ccc;">[BONUS]</span></span>
-            ${harmonyScore.mood && harmonyScore.mood.face !== '—'
-              ? `<span style="font-size:13px;font-weight:700;color:${harmonyScore.mood.color};">${harmonyScore.mood.face} ${harmonyScore.mood.mood>0?'+':''}${harmonyScore.mood.mood.toFixed(1)}</span>`
-              : '<span style="font-size:12px;color:#aaa;">—</span>'}
-          </div>
+          ${(()=>{
+            const avgS = harmonyScore.avgStars || 1;
+            const qPts = Math.round(Math.max(0, Math.min(40, (avgS-1)/4*40)));
+            const hPts = Math.round(Math.max(0, Math.min(30, (harmonyScore.harmonyVal||0)*30)));
+            const mPts = Math.min(20, Math.round((film.budget||0)/5));
+            const dLabel = harmonyScore.mood && harmonyScore.mood.face !== '—' ? harmonyScore.mood.label : '—';
+            const dColor = harmonyScore.mood ? harmonyScore.mood.color : '#aaa';
+            const dFace  = harmonyScore.mood && harmonyScore.mood.face !== '—' ? harmonyScore.mood.face : '';
+            const dPts   = harmonyScore.mood ? (harmonyScore.mood.mood>0?10:harmonyScore.mood.mood===0?5:0) : '?';
+            const hColor = hPts >= 20 ? '#1E8449' : hPts >= 10 ? '#B8860B' : '#C0392B';
+            const hColors = harmonyScore.filmColors ? harmonyScore.filmColors.map(c => colorSwatch(c,'11px')).join('') : '';
+            return `
+            <div style="display:grid;grid-template-columns:1fr auto;gap:4px 8px;align-items:center;">
+              <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.08em;">Quality</span>
+              <span style="font-size:15px;font-weight:800;color:#111;text-align:right;">\${avgS.toFixed(1)} <span style="font-size:11px;color:#aaa;">→ \${qPts}/40</span></span>
+
+              <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.08em;">Harmony</span>
+              <span style="font-size:13px;font-weight:700;color:\${hColor};text-align:right;">\${harmonyScore.harmonyLabel||'—'} \${hColors} → \${hPts}/30</span>
+
+              <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.08em;">Marketing</span>
+              <span style="font-size:13px;font-weight:700;color:#111;text-align:right;">\${film.budget?'$'+film.budget+'M':'$0M'} → \${mPts}/20</span>
+
+              <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.08em;">Luck</span>
+              <span style="font-size:12px;color:#aaa;font-style:italic;text-align:right;">0–10 at release</span>
+
+              <span style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.08em;border-top:1px solid #eee;padding-top:4px;">Director Bonus</span>
+              <span style="font-size:13px;font-weight:700;color:\${dColor};text-align:right;border-top:1px solid #eee;padding-top:4px;">\${dFace} \${dLabel} → \${dPts}/10</span>
+            </div>`;
+          })()}
         </div>
         ${harmonyScore.mood && harmonyScore.mood.face !== '—' && harmonyScore.mood.mood !== 0 ? `<div style="font-size:9px;margin-top:6px;padding:4px 7px;border-radius:4px;background:${harmonyScore.mood.mood>0?'#e8f5e9':'#fdecea'};color:${harmonyScore.mood.color};">
           ${harmonyScore.mood.face} Director is ${harmonyScore.mood.label.toLowerCase()} — ${harmonyScore.mood.mood>0?'+':''}${harmonyScore.mood.mood.toFixed(1)} quality bonus
@@ -2528,18 +2556,28 @@ function computeResults() {
         const qualityMult = harmony.qualityMult || 0.3;
         const marketing = Math.max(0, parseFloat(f.budget) || 0);
 
-        // SCORING FORMULA: Quality 40% + Harmony 30% + Marketing 20% + Luck 10%
-        const Q_MIN = 0.45, Q_MAX = 4.30;
-        const qualityNorm   = Math.max(0, Math.min(1, (qualityMult - Q_MIN) / (Q_MAX - Q_MIN)));
-        const harmonyNorm   = harmony.harmonyVal || 0.5; // 0–1 already
-        const marketingNorm = Math.log(1 + marketing / 30) / Math.log(1 + 200 / 30);
-        const luck          = Math.random();
+        // SCORING FORMULA — 100 points max + 10 director bonus = 110 max
+        // QUALITY  [40]: avg stars 1–5 → 0–40 pts
+        // HARMONY  [30]: color harmony 0–1 → 0–30 pts
+        // MARKETING[20]: $5M per point, cap $100M → 0–20 pts
+        // LUCK     [10]: random 0–10 pts
+        // DIRECTOR [+10 bonus only]: thrilled=10, neutral=5, unhappy=0
 
-        // Director happiness bonus (±0.15 on final score)
-        const dirMoodBonus = harmony.mood ? harmony.mood.mood * 0.3 : 0; // -0.5→-0.15, +0.5→+0.15
+        const avgStars   = harmony.avgStars || 1;
+        const qualityPts  = Math.max(0, Math.min(40, (avgStars - 1) / 4 * 40));
+        const harmonyPts  = Math.max(0, Math.min(30, (harmony.harmonyVal || 0) * 30));
+        const marketingPts= Math.min(20, (marketing || 0) / 5);
+        const luck        = Math.random() * 10; // 0–10
+        const dirBonus    = harmony.mood
+          ? (harmony.mood.mood > 0 ? 10 : harmony.mood.mood === 0 ? 5 : 0)
+          : 5;
 
-        const score = (qualityNorm * 0.40) + (harmonyNorm * 0.30) + (marketingNorm * 0.20) + (luck * 0.10) + dirMoodBonus;
-        const marketingBoost = marketingNorm; // for display
+        const score = qualityPts + harmonyPts + marketingPts + luck + dirBonus;
+        const marketingNorm = marketingPts / 20; // for display compat
+        const marketingBoost = marketingNorm;
+
+        // Store component scores on film for display
+        const _scoreBreakdown = {qualityPts, harmonyPts, marketingPts, luck, dirBonus};
 
         films.push({
           team: t,
@@ -2927,24 +2965,37 @@ function showSeasonCards(wr, idx) {
           let qualLabel = (f.avgStars||0).toFixed(1);
           if(moodVal > 0) qualLabel += ' <span style="font-size:9px;color:#1E8449;">(+' + moodVal.toFixed(1) + ' bonus)</span>';
           if(moodVal < 0) qualLabel += ' <span style="font-size:9px;color:#C0392B;">(' + moodVal.toFixed(1) + ' penalty)</span>';
-          return bar('Quality [40%]', qNorm, '#B8860B', qualLabel);
+          const qPts2 = f.scoreBreakdown ? Math.round(f.scoreBreakdown.qualityPts) : '?';
+          return bar('Quality → ' + qPts2 + '/40', qNorm, '#B8860B', qualLabel);
         })()}
         ${(()=>{
+          const sb = f.scoreBreakdown || {};
           const hVal = f.harmony ? (f.harmony.harmonyVal || 0) : 0;
           const hLabel = f.harmony ? (f.harmony.harmonyLabel || '—') : '—';
-          const hColors = f.harmony && f.harmony.filmColors ? f.harmony.filmColors.map(c => colorSwatch(c,'12px')).join('') : '';
+          const hColors = f.harmony && f.harmony.filmColors ? f.harmony.filmColors.map(c => colorSwatch(c,'11px')).join('') : '';
           const hColor = hVal >= 0.7 ? '#1E8449' : hVal >= 0.5 ? '#B8860B' : '#C0392B';
-          return bar('Harmony [30%]', hVal, hColor, hLabel + ' ' + hColors);
+          const hPts = Math.round(sb.harmonyPts || 0);
+          return bar('Harmony → ' + hPts + '/30', hVal, hColor, hLabel + ' ' + hColors);
         })()}
-        ${bar('Marketing [20%]', mNorm, '#1558A0', '$' + (f.budget||0) + 'M')}
-        ${bar('Luck [10%]', lNorm, '#6B4C9A', Math.round(lNorm*100) + ' / 100')}
         ${(()=>{
+          const sb = f.scoreBreakdown || {};
+          const mPts = Math.round(sb.marketingPts || 0);
+          return bar('Marketing → ' + mPts + '/20', mNorm, '#1558A0', '$' + (f.budget||0) + 'M');
+        })()}
+        ${(()=>{
+          const sb = f.scoreBreakdown || {};
+          const lPts = sb.luck !== undefined ? sb.luck.toFixed(1) : '?';
+          return bar('Luck → ' + lPts + '/10', lNorm, '#6B4C9A', lPts + ' pts');
+        })()}
+        ${(()=>{
+          const sb = f.scoreBreakdown || {};
           const mood = f.harmony && f.harmony.mood;
-          if(!mood || mood.face === '—') return '';
-          const moodColor = mood.mood > 0 ? '#1E8449' : mood.mood < 0 ? '#C0392B' : '#888';
-          return `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px;padding-top:4px;border-top:1px solid #f0f0f0;">
-            <span style="font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:0.1em;">Director [BONUS]</span>
-            <span style="font-size:11px;font-weight:700;color:${moodColor};">${mood.face} ${mood.mood>0?'+':''}${mood.mood.toFixed(1)}</span>
+          const dPts = sb.dirBonus !== undefined ? sb.dirBonus : (mood ? (mood.mood>0?10:mood.mood===0?5:0) : '?');
+          const dColor = dPts >= 10 ? '#1E8449' : dPts >= 5 ? '#B8860B' : '#888';
+          const dFace = mood ? mood.face : '';
+          return `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;padding-top:4px;border-top:1px solid #f0f0f0;">
+            <span style="font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:0.08em;">Director Bonus</span>
+            <span style="font-size:11px;font-weight:700;color:${dColor};">${dFace} ${dPts}/10</span>
           </div>`;
         })()}
       </div>
